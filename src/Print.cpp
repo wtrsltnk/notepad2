@@ -28,6 +28,7 @@
 #include <limits.h>
 #include <memory>
 #include <algorithm>
+#include <vector>
 #include "platform.h"
 #include "scintilla.h"
 #include "scilexer.h"

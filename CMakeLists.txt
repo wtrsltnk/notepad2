@@ -12,7 +12,7 @@ add_compile_definitions(
     UNICODE
     INCLUDE_DEPRECATED_FEATURES)
 
-add_executable(Notepad2
+add_executable(Notepad2 WIN32
   "src/Notepad2.c")
 
 target_sources(Notepad2
