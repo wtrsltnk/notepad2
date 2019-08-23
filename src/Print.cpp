@@ -23,7 +23,11 @@
 #include <commctrl.h>
 #include <shlwapi.h>
 #include <commdlg.h>
+#include <stdio.h>
 #include <string.h>
+#include <limits.h>
+#include <memory>
+#include <algorithm>
 #include "platform.h"
 #include "scintilla.h"
 #include "scilexer.h"
@@ -33,6 +37,7 @@ extern "C" {
 }
 #include "resource.h"
 
+using namespace std;
 
 extern "C" HINSTANCE g_hInstance;
 

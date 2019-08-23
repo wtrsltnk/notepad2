@@ -37,7 +37,7 @@ extern WCHAR szIniFile[MAX_PATH];
   WritePrivateProfileString(lpSection,lpName,lpString,szIniFile)
 #define IniDeleteSection(lpSection) \
   WritePrivateProfileSection(lpSection,NULL,szIniFile)
-__inline BOOL IniSetInt(LPCWSTR lpSection,LPCWSTR lpName,int i) {
+static BOOL IniSetInt(LPCWSTR lpSection,LPCWSTR lpName,int i) {
   WCHAR tch[32]; wsprintf(tch,L"%i",i); return IniSetString(lpSection,lpName,tch);
 }
 #define LoadIniSection(lpSection,lpBuf,cchBuf) \
@@ -47,17 +47,17 @@ __inline BOOL IniSetInt(LPCWSTR lpSection,LPCWSTR lpName,int i) {
 int IniSectionGetString(LPCWSTR,LPCWSTR,LPCWSTR,LPWSTR,int);
 int IniSectionGetInt(LPCWSTR,LPCWSTR,int);
 BOOL IniSectionSetString(LPWSTR,LPCWSTR,LPCWSTR);
-__inline BOOL IniSectionSetInt(LPWSTR lpCachedIniSection,LPCWSTR lpName,int i) {
+static BOOL IniSectionSetInt(LPWSTR lpCachedIniSection,LPCWSTR lpName,int i) {
   WCHAR tch[32]; wsprintf(tch,L"%i",i); return IniSectionSetString(lpCachedIniSection,lpName,tch);
 }
 
 
 extern HWND hwndEdit;
-__inline void BeginWaitCursor()
+static void BeginWaitCursor()
 {
   SendMessage(hwndEdit,SCI_SETCURSOR,(WPARAM)SC_CURSORWAIT,0);
 }
-__inline void EndWaitCursor()
+static void EndWaitCursor()
 {
   POINT pt;
   SendMessage(hwndEdit,SCI_SETCURSOR,(WPARAM)SC_CURSORNORMAL,0);
@@ -108,7 +108,7 @@ BOOL StatusSetTextID(HWND,UINT,UINT);
 int  StatusCalcPaneWidth(HWND,LPCWSTR);
 
 int Toolbar_GetButtons(HWND,int,LPWSTR,int);
-int Toolbar_SetButtons(HWND,int,LPCWSTR,void*,int);
+int Toolbar_SetButtons(HWND,int,LPCWSTR,LPCTBBUTTON,int);
 
 LRESULT SendWMSize(HWND);
 
