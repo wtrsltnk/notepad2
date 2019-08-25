@@ -58,6 +58,65 @@ typedef struct _editlexer
 // Number of Lexers in pLexArray
 #define NUMLEXERS 22
 
+extern KEYWORDLIST KeyWords_NULL;
+extern EDITLEXER lexDefault;
+extern KEYWORDLIST KeyWords_HTML;
+extern EDITLEXER lexHTML;
+extern KEYWORDLIST KeyWords_XML;
+extern EDITLEXER lexXML;
+extern KEYWORDLIST KeyWords_CSS;
+extern EDITLEXER lexCSS;
+extern KEYWORDLIST KeyWords_CPP;
+extern EDITLEXER lexCPP;
+extern KEYWORDLIST KeyWords_CS;
+extern EDITLEXER lexCS;
+extern KEYWORDLIST KeyWords_RC;
+extern EDITLEXER lexRC;
+extern KEYWORDLIST KeyWords_MAK;
+extern EDITLEXER lexMAK;
+extern KEYWORDLIST KeyWords_VBS;
+extern EDITLEXER lexVBS;
+extern KEYWORDLIST KeyWords_VB;
+extern EDITLEXER lexVB;
+extern KEYWORDLIST KeyWords_JS;
+extern EDITLEXER lexJS;
+extern KEYWORDLIST KeyWords_JAVA;
+extern EDITLEXER lexJAVA;
+extern KEYWORDLIST KeyWords_PAS;
+extern EDITLEXER lexPAS;
+extern KEYWORDLIST KeyWords_ASM;
+extern EDITLEXER lexASM;
+extern KEYWORDLIST KeyWords_PL;
+extern EDITLEXER lexPL;
+extern KEYWORDLIST KeyWords_INI;
+extern EDITLEXER lexINI;
+extern KEYWORDLIST KeyWords_BAT;
+extern EDITLEXER lexBAT;
+extern KEYWORDLIST KeyWords_DIFF;
+extern EDITLEXER lexDIFF;
+extern KEYWORDLIST KeyWords_SQL;
+extern EDITLEXER lexSQL;
+extern KEYWORDLIST KeyWords_PY;
+extern EDITLEXER lexPY;
+extern KEYWORDLIST KeyWords_CONF;
+extern EDITLEXER lexCONF;
+extern KEYWORDLIST KeyWords_PS;
+extern EDITLEXER lexPS;
+
+// This array holds all the lexers...
+extern PEDITLEXER pLexArray[NUMLEXERS];
+extern PEDITLEXER pLexCurrent;
+extern COLORREF crCustom[16];
+extern BOOL bUse2ndDefaultStyle;
+extern BOOL fStylesModified;
+extern BOOL fWarnedNoIniFile;
+extern BOOL fIsConsolasAvailable;
+extern int iBaseFontSize;
+extern int iDefaultLexer;
+extern BOOL bAutoSelect;
+extern int cxStyleSelectDlg;
+extern int cyStyleSelectDlg;
+
 void Style_Load();
 void Style_Save();
 BOOL Style_Import(HWND);
