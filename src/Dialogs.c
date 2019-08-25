@@ -17,20 +17,19 @@
 *
 *
 ******************************************************************************/
-#define _WIN32_WINNT 0x501
-#include <windows.h>
+#include "Dialogs.h"
+
 #include <commctrl.h>
 #include <shlobj.h>
 #include <shellapi.h>
 #include <shlwapi.h>
 #include <commdlg.h>
 #include <string.h>
-#include "scintilla.h"
-#include "notepad2.h"
-#include "edit.h"
-#include "dlapi.h"
-#include "dialogs.h"
-#include "helpers.h"
+#include <Scintilla.h>
+#include "Notepad2.h"
+#include "Edit.h"
+#include "Dlapi.h"
+#include "Helpers.h"
 #include "resource.h"
 #include "version.h"
 

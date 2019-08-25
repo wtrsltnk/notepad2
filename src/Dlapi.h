@@ -21,6 +21,10 @@
 #ifndef _DLAPI_H_
 #define _DLAPI_H_
 
+#define _WIN32_WINNT 0x501
+#include <windows.h>
+#include <shlobj.h>
+
 #ifdef __cplusplus
 extern "C" { // C-Declarations
 #endif //__cplusplus
@@ -193,4 +197,4 @@ BOOL IL_GetDisplayName(LPSHELLFOLDER,
 #endif // _DLAPI_H_
 
 
-///   End of Dlapi.h   \\\
+/*   End of Dlapi.h   */

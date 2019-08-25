@@ -18,6 +18,13 @@
 *
 ******************************************************************************/
 
+#ifndef _DIALOGS_H_
+#define _DIALOGS_H_
+
+#define _WIN32_WINNT 0x501
+#include <windows.h>
+
+#include <shlwapi.h>
 
 #define MBINFO         0
 #define MBWARN         1
@@ -46,5 +53,6 @@ BOOL RecodeDlg(HWND,int *);
 BOOL SelectDefLineEndingDlg(HWND,int *);
 INT_PTR InfoBox(int,LPCWSTR,int,...);
 
+#endif // _DIALOGS_H_
 
 // End of Dialogs.h
