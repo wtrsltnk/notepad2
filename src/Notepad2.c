@@ -19,6 +19,7 @@
 ******************************************************************************/
 #include "notepad2.h"
 
+#include "CodeRunner.h"
 #include "Dialogs.h"
 #include "Edit.h"
 #include "Helpers.h"
@@ -3907,10 +3908,26 @@ LRESULT MsgCommand(HWND hwnd, WPARAM wParam, LPARAM lParam)
 
         // Newline with toggled auto indent setting
         case CMD_CTRLENTER:
-            bAutoIndent = (bAutoIndent) ? 0 : 1;
-            SendMessage(hwndEdit, SCI_NEWLINE, 0, 0);
-            bAutoIndent = (bAutoIndent) ? 0 : 1;
+        {
+            cchSelection = (int)SendMessage(hwndEdit, SCI_GETSELECTIONEND, 0, 0) -
+                           (int)SendMessage(hwndEdit, SCI_GETSELECTIONSTART, 0, 0);
+
+            if (cchSelection > 0 && cchSelection <= 500 && SendMessage(hwndEdit, SCI_GETSELTEXT, 0, 0) < COUNTOF(mszSelection))
+            {
+                SendMessage(hwndEdit, SCI_GETSELTEXT, 0, (LPARAM)mszSelection);
+                mszSelection[cchSelection] = 0; // zero terminate
+            }
+            else
+            {
+                mszSelection[0] = 0; // zero terminate
+            }
+            CodeRunner_ExecuteModel model = {
+                mszContent,
+                mszSelection,
+            };
+            CodeRunner_Execute(model);
             break;
+        }
 
         case CMD_CTRLBACK:
         {

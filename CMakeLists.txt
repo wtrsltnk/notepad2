@@ -529,6 +529,10 @@ target_sources(Notepad2
   PUBLIC "src/resource.h")
 
 target_sources(Notepad2
+  PUBLIC "src/CodeRunner.cxx"
+  PUBLIC "src/CodeRunner.h")
+
+target_sources(Notepad2
   PUBLIC "src/Print.cpp"
   PUBLIC "scintilla/include/platform.h"
   PUBLIC "scintilla/include/scintilla.h"
