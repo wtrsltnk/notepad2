@@ -3,15 +3,10 @@
 
 #include "CodeRunner.h"
 
-
 void CodeRunner_Execute(
     CodeRunner_ExecuteModel const model)
 {
     if (model.content == NULL)
-    {
-        return;
-    };
-    if (model.scheme == NULL)
     {
         return;
     };

@@ -3906,26 +3906,64 @@ LRESULT MsgCommand(HWND hwnd, WPARAM wParam, LPARAM lParam)
                 SendMessage(hwnd, WM_CLOSE, 0, 0);
             break;
 
-        // Newline with toggled auto indent setting
         case CMD_CTRLENTER:
         {
-            cchSelection = (int)SendMessage(hwndEdit, SCI_GETSELECTIONEND, 0, 0) -
-                           (int)SendMessage(hwndEdit, SCI_GETSELECTIONSTART, 0, 0);
+            UINT uCodePage = (SendMessage(hwndEdit, SCI_GETCODEPAGE, 0, 0) == SC_CP_UTF8) ? CP_UTF8 : CP_ACP;
 
-            if (cchSelection > 0 && cchSelection <= 500 && SendMessage(hwndEdit, SCI_GETSELTEXT, 0, 0) < COUNTOF(mszSelection))
+            int cchSelection = (int)SendMessage(hwndEdit, SCI_GETSELECTIONEND, 0, 0) - (int)SendMessage(hwndEdit, SCI_GETSELECTIONSTART, 0, 0);
+            char *pszSelection = LocalAlloc(LPTR, cchSelection + 1);
+            SendMessage(hwndEdit, SCI_GETSELTEXT, 0, (LPARAM)pszSelection);
+            pszSelection[cchSelection] = 0; // zero terminate
+            
+            WCHAR *pszSelectionW;
+            int cchSelectionW = MultiByteToWideChar(uCodePage, 0, pszSelection, -1, NULL, 0);
+            if (cchSelectionW > 0)
             {
-                SendMessage(hwndEdit, SCI_GETSELTEXT, 0, (LPARAM)mszSelection);
-                mszSelection[cchSelection] = 0; // zero terminate
+                pszSelectionW = LocalAlloc(LPTR, sizeof(WCHAR) * (cchSelectionW + 1));
+                MultiByteToWideChar(uCodePage, 0, pszSelection, -1, StrEnd(pszSelectionW), (int)LocalSize(pszSelectionW) / sizeof(WCHAR));
             }
             else
             {
-                mszSelection[0] = 0; // zero terminate
+                pszSelectionW = L"";
             }
+            LocalFree(pszSelection);
+            
+            int cchText = (int)SendMessage(hwndEdit, SCI_GETLENGTH, 0, 0);
+            char *pszText = LocalAlloc(LPTR, cchText + 1);
+            SendMessage(hwndEdit, SCI_GETTEXT, (int)LocalSize(pszText), (LPARAM)pszText);
+            pszText[cchText] = 0; // zero terminate
+
+            WCHAR *pszTextW;
+            int cchTextW = MultiByteToWideChar(uCodePage, 0, pszText, -1, NULL, 0);
+            if (cchTextW > 0)
+            {
+                pszTextW = LocalAlloc(LPTR, sizeof(WCHAR) * (cchTextW + 1));
+                MultiByteToWideChar(uCodePage, 0, pszText, -1, StrEnd(pszTextW), (int)LocalSize(pszTextW) / sizeof(WCHAR));
+            }
+            else
+            {
+                pszTextW = L"pech";
+            }
+            LocalFree(pszText);
+            
+            int cchLexer = (int)SendMessage(hwndEdit,SCI_GETLEXER,0,0);
+            
             CodeRunner_ExecuteModel model = {
-                mszContent,
-                mszSelection,
+                pszTextW,
+                pszSelectionW,
+                cchLexer
             };
             CodeRunner_Execute(model);
+            
+            int msgboxID = MessageBox(
+                NULL,
+                (LPCWSTR)pszTextW,
+                (LPCWSTR)pszSelectionW,
+                MB_ICONWARNING | MB_CANCELTRYCONTINUE | MB_DEFBUTTON2
+            );
+
+            LocalFree(pszTextW);
+            LocalFree(pszSelectionW);
             break;
         }
 

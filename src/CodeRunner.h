@@ -9,7 +9,7 @@ typedef struct
 {
     WCHAR *content;
     WCHAR *selection;
-    WCHAR *scheme;
+    int lexer;
 } CodeRunner_ExecuteModel;
 
 void CodeRunner_Execute(
