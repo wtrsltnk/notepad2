@@ -3950,18 +3950,10 @@ LRESULT MsgCommand(HWND hwnd, WPARAM wParam, LPARAM lParam)
             
             CodeRunner_ExecuteModel model = {
                 pszTextW,
-                pszSelectionW,
                 cchLexer
             };
             CodeRunner_Execute(model);
             
-            int msgboxID = MessageBox(
-                NULL,
-                (LPCWSTR)pszTextW,
-                (LPCWSTR)pszSelectionW,
-                MB_ICONWARNING | MB_CANCELTRYCONTINUE | MB_DEFBUTTON2
-            );
-
             LocalFree(pszTextW);
             LocalFree(pszSelectionW);
             break;

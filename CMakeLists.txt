@@ -530,7 +530,9 @@ target_sources(Notepad2
 
 target_sources(Notepad2
   PUBLIC "src/CodeRunner.cxx"
-  PUBLIC "src/CodeRunner.h")
+  PUBLIC "src/CodeRunner.h"
+  PUBLIC "src/odbcsql.cpp"
+  PUBLIC "src/odbcsql.h")
 
 target_sources(Notepad2
   PUBLIC "src/Print.cpp"
@@ -593,4 +595,5 @@ target_link_libraries(Notepad2
   PUBLIC imm32.lib
   PUBLIC ole32.lib
   PUBLIC oleaut32.lib
-  PUBLIC psapi.lib)
+  PUBLIC psapi.lib
+  PUBLIC odbc32)

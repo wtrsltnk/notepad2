@@ -8,7 +8,6 @@ extern "C" {
 typedef struct 
 {
     WCHAR *content;
-    WCHAR *selection;
     int lexer;
 } CodeRunner_ExecuteModel;
 
