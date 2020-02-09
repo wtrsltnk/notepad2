@@ -341,7 +341,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInst, LPSTR lpCmdLine, in
             NULL);
         MessageBox(NULL, (LPCWSTR)lpMsgBuf, L"Notepad2", MB_OK | MB_ICONEXCLAMATION);
         LocalFree(lpMsgBuf);
-        return (0);
+        return FALSE;
     }
 
     // Check if running with elevated privileges
@@ -364,7 +364,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInst, LPSTR lpCmdLine, in
     if (flagDisplayHelp)
     {
         DisplayCmdLineHelp();
-        return (0);
+        return FALSE;
     }
 
     // Adapt window class name
@@ -375,15 +375,15 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInst, LPSTR lpCmdLine, in
 
     // Relaunch with elevated privileges
     if (RelaunchElevated())
-        return (0);
+        return FALSE;
 
     // Try to run multiple instances
     if (RelaunchMultiInst())
-        return (0);
+        return FALSE;
 
     // Try to activate another window
     if (ActivatePrevInst())
-        return (0);
+        return FALSE;
 
     // Init OLE and Common Controls
     OleInitialize(NULL);
@@ -434,8 +434,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInst, LPSTR lpCmdLine, in
     OleUninitialize();
 
     return (int)(msg.wParam);
-
-    hPrevInst;
 }
 
 //=============================================================================
@@ -788,8 +786,6 @@ HWND InitInstance(HINSTANCE hInstance, LPSTR pszCmdLine, int nCmdShow)
 //
 LRESULT CALLBACK MainWndProc(HWND hwnd, UINT umsg, WPARAM wParam, LPARAM lParam)
 {
-    static BOOL bShutdownOK;
-
     switch (umsg)
     {
 
@@ -806,136 +802,86 @@ LRESULT CALLBACK MainWndProc(HWND hwnd, UINT umsg, WPARAM wParam, LPARAM lParam)
         case WM_NCLBUTTONDOWN:
         case WM_WINDOWPOSCHANGING:
         case WM_WINDOWPOSCHANGED:
+        {
             return DefWindowProc(hwnd, umsg, wParam, lParam);
+        }
 
         case WM_CREATE:
+        {
             return MsgCreate(hwnd, wParam, lParam);
+        }
 
         case WM_DESTROY:
         case WM_ENDSESSION:
-            if (!bShutdownOK)
-            {
+        {
+            MsgDestroy(hwnd, wParam, lParam);
 
-                WINDOWPLACEMENT wndpl;
-
-                // Terminate file watching
-                InstallFileWatching(NULL);
-
-                // GetWindowPlacement
-                wndpl.length = sizeof(WINDOWPLACEMENT);
-                GetWindowPlacement(hwnd, &wndpl);
-
-                wi.x = wndpl.rcNormalPosition.left;
-                wi.y = wndpl.rcNormalPosition.top;
-                wi.cx = wndpl.rcNormalPosition.right - wndpl.rcNormalPosition.left;
-                wi.cy = wndpl.rcNormalPosition.bottom - wndpl.rcNormalPosition.top;
-                wi.max = (IsZoomed(hwnd) || (wndpl.flags & WPF_RESTORETOMAXIMIZED));
-
-                DragAcceptFiles(hwnd, FALSE);
-
-                // Terminate clipboard watching
-                if (flagPasteBoard)
-                {
-                    KillTimer(hwnd, ID_PASTEBOARDTIMER);
-                    ChangeClipboardChain(hwnd, hwndNextCBChain);
-                }
-
-                // Destroy find / replace dialog
-                if (IsWindow(hDlgFindReplace))
-                    DestroyWindow(hDlgFindReplace);
-
-                // call SaveSettings() when hwndToolbar is still valid
-                SaveSettings(FALSE);
-
-                if (lstrlen(szIniFile) != 0)
-                {
-
-                    // Cleanup unwanted MRU's
-                    if (!bSaveRecentFiles)
-                    {
-                        MRU_Empty(pFileMRU);
-                        MRU_Save(pFileMRU);
-                    }
-                    else
-                        MRU_MergeSave(pFileMRU, TRUE, flagRelativeFileMRU, flagPortableMyDocs);
-                    MRU_Destroy(pFileMRU);
-
-                    if (!bSaveFindReplace)
-                    {
-                        MRU_Empty(mruFind);
-                        MRU_Empty(mruReplace);
-                        MRU_Save(mruFind);
-                        MRU_Save(mruReplace);
-                    }
-                    else
-                    {
-                        MRU_MergeSave(mruFind, FALSE, FALSE, FALSE);
-                        MRU_MergeSave(mruReplace, FALSE, FALSE, FALSE);
-                    }
-                    MRU_Destroy(mruFind);
-                    MRU_Destroy(mruReplace);
-                }
-
-                // Remove tray icon if necessary
-                ShowNotifyIcon(hwnd, FALSE);
-
-                bShutdownOK = TRUE;
-            }
             if (umsg == WM_DESTROY)
+            {
                 PostQuitMessage(0);
+            }
+
             break;
+        }
 
         case WM_CLOSE:
+        {
             if (FileSave(FALSE, TRUE, FALSE, FALSE))
+            {
                 DestroyWindow(hwnd);
+            }
+
             break;
+        }
 
         case WM_QUERYENDSESSION:
+        {
             if (FileSave(FALSE, TRUE, FALSE, FALSE))
+            {
                 return TRUE;
-            else
-                return FALSE;
+            }
+
+            break;
+        }
 
         // Reinitialize theme-dependent values and resize windows
         case WM_THEMECHANGED:
+        {
             MsgThemeChanged(hwnd, wParam, lParam);
             break;
+        }
 
         // update Scintilla colors
-        case WM_SYSCOLORCHANGE: {
+        case WM_SYSCOLORCHANGE:
+        {
             extern PEDITLEXER pLexCurrent;
             Style_SetLexer(hwndEdit, pLexCurrent);
             return DefWindowProc(hwnd, umsg, wParam, lParam);
         }
 
-            //case WM_TIMER:
-            //  break;
-
         case WM_SIZE:
+        {
             MsgSize(hwnd, wParam, lParam);
             break;
+        }
 
         case WM_SETFOCUS:
+        {
             SetFocus(hwndEdit);
 
             UpdateToolbar();
             UpdateStatusbar();
 
-            //if (bPendingChangeNotify)
-            //  PostMessage(hwnd,WM_CHANGENOTIFY,0,0);
             break;
+        }
 
-        case WM_DROPFILES: {
+        case WM_DROPFILES:
+        {
             WCHAR szBuf[MAX_PATH + 40];
             HDROP hDrop = (HDROP)wParam;
 
-            // Reset Change Notify
-            //bPendingChangeNotify = FALSE;
-
             if (IsIconic(hwnd))
                 ShowWindow(hwnd, SW_RESTORE);
-
-            //SetForegroundWindow(hwnd);
 
             DragQueryFile(hDrop, 0, szBuf, COUNTOF(szBuf));
 
@@ -953,14 +899,13 @@ LRESULT CALLBACK MainWndProc(HWND hwnd, UINT umsg, WPARAM wParam, LPARAM lParam)
                 MsgBox(MBINFO, IDS_ERR_DROP);
 
             DragFinish(hDrop);
+
+            break;
         }
-        break;
 
-        case WM_COPYDATA: {
+        case WM_COPYDATA:
+        {
             PCOPYDATASTRUCT pcds = (PCOPYDATASTRUCT)lParam;
-
-            // Reset Change Notify
-            //bPendingChangeNotify = FALSE;
 
             SetDlgItemInt(hwnd, IDC_REUSELOCK, GetTickCount(), FALSE);
 
@@ -1068,10 +1013,11 @@ LRESULT CALLBACK MainWndProc(HWND hwnd, UINT umsg, WPARAM wParam, LPARAM lParam)
 
                 UpdateStatusbar();
             }
-        }
             return TRUE;
+        }
 
-        case WM_CONTEXTMENU: {
+        case WM_CONTEXTMENU:
+        {
             HMENU hmenu;
             int imenu = 0;
             POINT pt;
@@ -1089,7 +1035,8 @@ LRESULT CALLBACK MainWndProc(HWND hwnd, UINT umsg, WPARAM wParam, LPARAM lParam)
 
             switch (nID)
             {
-                case IDC_EDIT: {
+                case IDC_EDIT:
+                {
                     int iSelStart = (int)SendMessage(hwndEdit, SCI_GETSELECTIONSTART, 0, 0);
                     int iSelEnd = (int)SendMessage(hwndEdit, SCI_GETSELECTIONEND, 0, 0);
 
@@ -1126,20 +1073,28 @@ LRESULT CALLBACK MainWndProc(HWND hwnd, UINT umsg, WPARAM wParam, LPARAM lParam)
                              TPM_LEFTBUTTON | TPM_RIGHTBUTTON, pt.x + 1, pt.y + 1, hwnd, NULL);
 
             DestroyMenu(hmenu);
+
+            break;
         }
-        break;
 
         case WM_INITMENU:
+        {
             MsgInitMenu(hwnd, wParam, lParam);
             break;
+        }
 
         case WM_NOTIFY:
+        {
             return MsgNotify(hwnd, wParam, lParam);
+        }
 
         case WM_COMMAND:
+        {
             return MsgCommand(hwnd, wParam, lParam);
+        }
 
         case WM_SYSCOMMAND:
+        {
             switch (wParam)
             {
                 case SC_MINIMIZE:
@@ -1149,20 +1104,23 @@ LRESULT CALLBACK MainWndProc(HWND hwnd, UINT umsg, WPARAM wParam, LPARAM lParam)
                         MinimizeWndToTray(hwnd);
                         ShowNotifyIcon(hwnd, TRUE);
                         SetNotifyIconTitle(hwnd);
-                        return (0);
+                        return FALSE;
                     }
                     else
                         return DefWindowProc(hwnd, umsg, wParam, lParam);
 
-                case SC_RESTORE: {
+                case SC_RESTORE:
+                {
                     LRESULT lrv = DefWindowProc(hwnd, umsg, wParam, lParam);
                     ShowOwnedPopups(hwnd, TRUE);
                     return (lrv);
                 }
             }
             return DefWindowProc(hwnd, umsg, wParam, lParam);
+        }
 
         case WM_CHANGENOTIFY:
+        {
             if (iFileWatchingMode == 1 || bModified || iEncoding != iOriginalEncoding)
                 SetForegroundWindow(hwnd);
 
@@ -1217,13 +1175,10 @@ LRESULT CALLBACK MainWndProc(HWND hwnd, UINT umsg, WPARAM wParam, LPARAM lParam)
             if (!bRunningWatch)
                 InstallFileWatching(szCurFile);
             break;
-
-            //// This message is posted before Notepad2 reactivates itself
-            //case WM_CHANGENOTIFYCLEAR:
-            //  bPendingChangeNotify = FALSE;
-            //  break;
+        }
 
         case WM_DRAWCLIPBOARD:
+        {
             if (!bLastCopyFromMe)
                 dwLastCopyTime = GetTickCount();
             else
@@ -1231,18 +1186,23 @@ LRESULT CALLBACK MainWndProc(HWND hwnd, UINT umsg, WPARAM wParam, LPARAM lParam)
             if (hwndNextCBChain)
                 SendMessage(hwndNextCBChain, WM_DRAWCLIPBOARD, wParam, lParam);
             break;
+        }
 
         case WM_CHANGECBCHAIN:
+        {
             if ((HWND)wParam == hwndNextCBChain)
                 hwndNextCBChain = (HWND)lParam;
             if (hwndNextCBChain)
                 SendMessage(hwndNextCBChain, WM_CHANGECBCHAIN, lParam, wParam);
             break;
+        }
 
         case WM_TRAYMESSAGE:
+        {
             switch (lParam)
             {
-                case WM_RBUTTONUP: {
+                case WM_RBUTTONUP:
+                {
 
                     HMENU hMenu = LoadMenu(g_hInstance, MAKEINTRESOURCE(IDR_POPUPMENU));
                     HMENU hMenuPopup = GetSubMenu(hMenu, 2);
@@ -1284,21 +1244,23 @@ LRESULT CALLBACK MainWndProc(HWND hwnd, UINT umsg, WPARAM wParam, LPARAM lParam)
                     return TRUE;
             }
             break;
+        }
 
         default:
-
+        {
             if (umsg == msgTaskbarCreated)
             {
                 if (!IsWindowVisible(hwnd))
                     ShowNotifyIcon(hwnd, TRUE);
                 SetNotifyIconTitle(hwnd);
-                return (0);
+                return FALSE;
             }
 
             return DefWindowProc(hwnd, umsg, wParam, lParam);
+        }
     }
 
-    return (0);
+    return FALSE;
 }
 
 //=============================================================================
@@ -1499,7 +1461,81 @@ LRESULT MsgCreate(HWND hwnd, WPARAM wParam, LPARAM lParam)
         hwndStatus == NULL || hwndToolbar == NULL || hwndReBar == NULL)
         return (-1);
 
-    return (0);
+    return FALSE;
+}
+
+void MsgDestroy(HWND hwnd, WPARAM wParam, LPARAM lParam)
+{
+    static BOOL bShutdownOK = FALSE;
+
+    if (!bShutdownOK)
+    {
+
+        WINDOWPLACEMENT wndpl;
+
+        // Terminate file watching
+        InstallFileWatching(NULL);
+
+        // GetWindowPlacement
+        wndpl.length = sizeof(WINDOWPLACEMENT);
+        GetWindowPlacement(hwnd, &wndpl);
+
+        wi.x = wndpl.rcNormalPosition.left;
+        wi.y = wndpl.rcNormalPosition.top;
+        wi.cx = wndpl.rcNormalPosition.right - wndpl.rcNormalPosition.left;
+        wi.cy = wndpl.rcNormalPosition.bottom - wndpl.rcNormalPosition.top;
+        wi.max = (IsZoomed(hwnd) || (wndpl.flags & WPF_RESTORETOMAXIMIZED));
+
+        DragAcceptFiles(hwnd, FALSE);
+
+        // Terminate clipboard watching
+        if (flagPasteBoard)
+        {
+            KillTimer(hwnd, ID_PASTEBOARDTIMER);
+            ChangeClipboardChain(hwnd, hwndNextCBChain);
+        }
+
+        // Destroy find / replace dialog
+        if (IsWindow(hDlgFindReplace))
+            DestroyWindow(hDlgFindReplace);
+
+        // call SaveSettings() when hwndToolbar is still valid
+        SaveSettings(FALSE);
+
+        if (lstrlen(szIniFile) != 0)
+        {
+
+            // Cleanup unwanted MRU's
+            if (!bSaveRecentFiles)
+            {
+                MRU_Empty(pFileMRU);
+                MRU_Save(pFileMRU);
+            }
+            else
+                MRU_MergeSave(pFileMRU, TRUE, flagRelativeFileMRU, flagPortableMyDocs);
+            MRU_Destroy(pFileMRU);
+
+            if (!bSaveFindReplace)
+            {
+                MRU_Empty(mruFind);
+                MRU_Empty(mruReplace);
+                MRU_Save(mruFind);
+                MRU_Save(mruReplace);
+            }
+            else
+            {
+                MRU_MergeSave(mruFind, FALSE, FALSE, FALSE);
+                MRU_MergeSave(mruReplace, FALSE, FALSE, FALSE);
+            }
+            MRU_Destroy(mruFind);
+            MRU_Destroy(mruReplace);
+        }
+
+        // Remove tray icon if necessary
+        ShowNotifyIcon(hwnd, FALSE);
+
+        bShutdownOK = TRUE;
+    }
 }
 
 //=============================================================================
@@ -2055,14 +2091,19 @@ LRESULT MsgCommand(HWND hwnd, WPARAM wParam, LPARAM lParam)
     {
 
         case IDM_FILE_NEW:
+        {
             FileLoad(FALSE, TRUE, FALSE, FALSE, L"");
             break;
+        }
 
         case IDM_FILE_OPEN:
+        {
             FileLoad(FALSE, FALSE, FALSE, FALSE, L"");
             break;
+        }
 
-        case IDM_FILE_REVERT: {
+        case IDM_FILE_REVERT:
+        {
             if (lstrlen(szCurFile))
             {
 
@@ -2075,7 +2116,7 @@ LRESULT MsgCommand(HWND hwnd, WPARAM wParam, LPARAM lParam)
                 int iXOffset = (int)SendMessage(hwndEdit, SCI_GETXOFFSET, 0, 0);
 
                 if ((bModified || iEncoding != iOriginalEncoding) && MsgBox(MBOKCANCEL, IDS_ASK_REVERT) != IDOK)
-                    return (0);
+                    return FALSE;
 
                 lstrcpy(tchCurFile2, szCurFile);
 
@@ -2102,22 +2143,25 @@ LRESULT MsgCommand(HWND hwnd, WPARAM wParam, LPARAM lParam)
         break;
 
         case IDM_FILE_SAVE:
+        {
             FileSave(TRUE, FALSE, FALSE, FALSE);
             break;
+        }
 
         case IDM_FILE_SAVEAS:
+        {
             FileSave(TRUE, FALSE, TRUE, FALSE);
             break;
+        }
 
         case IDM_FILE_SAVECOPY:
+        {
             FileSave(TRUE, FALSE, TRUE, TRUE);
             break;
+        }
 
         case IDM_FILE_READONLY:
-            //bReadOnly = (bReadOnly) ? FALSE : TRUE;
-            //SendMessage(hwndEdit,SCI_SETREADONLY,bReadOnly,0);
-            //UpdateToolbar();
-            //UpdateStatusbar();
+        {
             if (lstrlen(szCurFile))
             {
                 DWORD dwFileAttributes = GetFileAttributes(szCurFile);
@@ -2142,8 +2186,10 @@ LRESULT MsgCommand(HWND hwnd, WPARAM wParam, LPARAM lParam)
                                IDS_READONLY, bReadOnly, szTitleExcerpt);
             }
             break;
+        }
 
-        case IDM_FILE_BROWSE: {
+        case IDM_FILE_BROWSE:
+        {
             SHELLEXECUTEINFO sei;
             WCHAR tchParam[MAX_PATH + 4] = L"";
             WCHAR tchExeFile[MAX_PATH + 4];
@@ -2203,7 +2249,8 @@ LRESULT MsgCommand(HWND hwnd, WPARAM wParam, LPARAM lParam)
         break;
 
         case IDM_FILE_NEWWINDOW:
-        case IDM_FILE_NEWWINDOW2: {
+        case IDM_FILE_NEWWINDOW2:
+        {
             SHELLEXECUTEINFO sei;
             WCHAR szModuleName[MAX_PATH];
             WCHAR szFileName[MAX_PATH];
@@ -2286,7 +2333,8 @@ LRESULT MsgCommand(HWND hwnd, WPARAM wParam, LPARAM lParam)
         }
         break;
 
-        case IDM_FILE_LAUNCH: {
+        case IDM_FILE_LAUNCH:
+        {
             SHELLEXECUTEINFO sei;
             WCHAR wchDirectory[MAX_PATH] = L"";
 
@@ -2317,7 +2365,8 @@ LRESULT MsgCommand(HWND hwnd, WPARAM wParam, LPARAM lParam)
         }
         break;
 
-        case IDM_FILE_RUN: {
+        case IDM_FILE_RUN:
+        {
             WCHAR tchCmdLine[MAX_PATH + 4];
 
             if (bSaveBeforeRunningTools && !FileSave(FALSE, TRUE, FALSE, FALSE))
@@ -2331,16 +2380,21 @@ LRESULT MsgCommand(HWND hwnd, WPARAM wParam, LPARAM lParam)
         break;
 
         case IDM_FILE_OPENWITH:
+        {
             if (bSaveBeforeRunningTools && !FileSave(FALSE, TRUE, FALSE, FALSE))
                 break;
             OpenWithDlg(hwnd, szCurFile);
             break;
+        }
 
         case IDM_FILE_PAGESETUP:
+        {
             EditPrintSetup(hwndEdit);
             break;
+        }
 
-        case IDM_FILE_PRINT: {
+        case IDM_FILE_PRINT:
+        {
             SHFILEINFO shfi;
             WCHAR *pszTitle;
             WCHAR tchUntitled[32];
@@ -2364,7 +2418,8 @@ LRESULT MsgCommand(HWND hwnd, WPARAM wParam, LPARAM lParam)
         }
         break;
 
-        case IDM_FILE_PROPERTIES: {
+        case IDM_FILE_PROPERTIES:
+        {
             SHELLEXECUTEINFO sei;
 
             if (lstrlen(szCurFile) == 0)
@@ -2383,7 +2438,8 @@ LRESULT MsgCommand(HWND hwnd, WPARAM wParam, LPARAM lParam)
         }
         break;
 
-        case IDM_FILE_CREATELINK: {
+        case IDM_FILE_CREATELINK:
+        {
             if (!lstrlen(szCurFile))
                 break;
 
@@ -2393,6 +2449,7 @@ LRESULT MsgCommand(HWND hwnd, WPARAM wParam, LPARAM lParam)
         break;
 
         case IDM_FILE_OPENFAV:
+        {
             if (FileSave(FALSE, TRUE, FALSE, FALSE))
             {
 
@@ -2415,8 +2472,10 @@ LRESULT MsgCommand(HWND hwnd, WPARAM wParam, LPARAM lParam)
                 }
             }
             break;
+        }
 
         case IDM_FILE_ADDTOFAV:
+        {
             if (lstrlen(szCurFile))
             {
                 SHFILEINFO shfi;
@@ -2424,8 +2483,10 @@ LRESULT MsgCommand(HWND hwnd, WPARAM wParam, LPARAM lParam)
                 AddToFavDlg(hwnd, shfi.szDisplayName, szCurFile);
             }
             break;
+        }
 
-        case IDM_FILE_MANAGEFAV: {
+        case IDM_FILE_MANAGEFAV:
+        {
             SHELLEXECUTEINFO sei;
             ZeroMemory(&sei, sizeof(SHELLEXECUTEINFO));
 
@@ -2444,6 +2505,7 @@ LRESULT MsgCommand(HWND hwnd, WPARAM wParam, LPARAM lParam)
         break;
 
         case IDM_FILE_RECENT:
+        {
             if (MRU_Enum(pFileMRU, 0, NULL, 0) > 0)
             {
                 if (FileSave(FALSE, TRUE, FALSE, FALSE))
@@ -2454,17 +2516,21 @@ LRESULT MsgCommand(HWND hwnd, WPARAM wParam, LPARAM lParam)
                 }
             }
             break;
+        }
 
         case IDM_FILE_EXIT:
+        {
             SendMessage(hwnd, WM_CLOSE, 0, 0);
             break;
+        }
 
         case IDM_ENCODING_ANSI:
         case IDM_ENCODING_UNICODE:
         case IDM_ENCODING_UNICODEREV:
         case IDM_ENCODING_UTF8:
         case IDM_ENCODING_UTF8SIGN:
-        case IDM_ENCODING_SELECT: {
+        case IDM_ENCODING_SELECT:
+        {
             int iNewEncoding = iEncoding;
             if (LOWORD(wParam) == IDM_ENCODING_SELECT && !SelectEncodingDlg(hwnd, &iNewEncoding))
                 break;
@@ -2517,7 +2583,8 @@ LRESULT MsgCommand(HWND hwnd, WPARAM wParam, LPARAM lParam)
         }
         break;
 
-        case IDM_ENCODING_RECODE: {
+        case IDM_ENCODING_RECODE:
+        {
             if (lstrlen(szCurFile))
             {
 
@@ -2534,7 +2601,7 @@ LRESULT MsgCommand(HWND hwnd, WPARAM wParam, LPARAM lParam)
                     iNewEncoding = CPI_UNICODEBE;
 
                 if ((bModified || iEncoding != iOriginalEncoding) && MsgBox(MBOKCANCEL, IDS_ASK_RECODE) != IDOK)
-                    return (0);
+                    return FALSE;
 
                 if (RecodeDlg(hwnd, &iNewEncoding))
                 {
@@ -2544,16 +2611,19 @@ LRESULT MsgCommand(HWND hwnd, WPARAM wParam, LPARAM lParam)
                     FileLoad(TRUE, FALSE, TRUE, FALSE, tchCurFile2);
                 }
             }
+            break;
         }
-        break;
 
         case IDM_ENCODING_SETDEFAULT:
+        {
             SelectDefEncodingDlg(hwnd, &iDefaultEncoding);
             break;
+        }
 
         case IDM_LINEENDINGS_CRLF:
         case IDM_LINEENDINGS_LF:
-        case IDM_LINEENDINGS_CR: {
+        case IDM_LINEENDINGS_CR:
+        {
             int iNewEOLMode = iLineEndings[LOWORD(wParam) - IDM_LINEENDINGS_CRLF];
             iEOLMode = iNewEOLMode;
             SendMessage(hwndEdit, SCI_SETEOLMODE, iEOLMode, 0);
@@ -2564,53 +2634,70 @@ LRESULT MsgCommand(HWND hwnd, WPARAM wParam, LPARAM lParam)
             SetWindowTitle(hwnd, uidsAppTitle, fIsElevated, IDS_UNTITLED, szCurFile,
                            iPathNameFormat, bModified || iEncoding != iOriginalEncoding,
                            IDS_READONLY, bReadOnly, szTitleExcerpt);
+            break;
         }
-        break;
 
         case IDM_LINEENDINGS_SETDEFAULT:
+        {
             SelectDefLineEndingDlg(hwnd, &iDefaultEOLMode);
             break;
+        }
 
         case IDM_EDIT_UNDO:
+        {
             SendMessage(hwndEdit, SCI_UNDO, 0, 0);
             break;
+        }
 
         case IDM_EDIT_REDO:
+        {
             SendMessage(hwndEdit, SCI_REDO, 0, 0);
             break;
+        }
 
         case IDM_EDIT_CUT:
+        {
             if (flagPasteBoard)
                 bLastCopyFromMe = TRUE;
             SendMessage(hwndEdit, SCI_CUT, 0, 0);
             break;
+        }
 
         case IDM_EDIT_COPY:
+        {
             if (flagPasteBoard)
                 bLastCopyFromMe = TRUE;
             SendMessage(hwndEdit, SCI_COPY, 0, 0);
             UpdateToolbar();
             break;
+        }
 
         case IDM_EDIT_COPYALL:
+        {
             if (flagPasteBoard)
                 bLastCopyFromMe = TRUE;
             SendMessage(hwndEdit, SCI_COPYRANGE, 0, SendMessage(hwndEdit, SCI_GETLENGTH, 0, 0));
             UpdateToolbar();
             break;
+        }
 
         case IDM_EDIT_COPYADD:
+        {
             if (flagPasteBoard)
                 bLastCopyFromMe = TRUE;
             EditCopyAppend(hwndEdit);
             UpdateToolbar();
             break;
+        }
 
         case IDM_EDIT_PASTE:
+        {
             SendMessage(hwndEdit, SCI_PASTE, 0, 0);
             break;
+        }
 
         case IDM_EDIT_SWAP:
+        {
             if (SendMessage(hwndEdit, SCI_GETSELECTIONEND, 0, 0) -
                     SendMessage(hwndEdit, SCI_GETSELECTIONSTART, 0, 0) ==
                 0)
@@ -2640,12 +2727,16 @@ LRESULT MsgCommand(HWND hwnd, WPARAM wParam, LPARAM lParam)
                 LocalFree(pClip);
             }
             break;
+        }
 
         case IDM_EDIT_CLEAR:
+        {
             SendMessage(hwndEdit, SCI_CLEAR, 0, 0);
             break;
+        }
 
         case IDM_EDIT_CLEARCLIPBOARD:
+        {
             if (OpenClipboard(hwnd))
             {
                 if (CountClipboardFormats() > 0)
@@ -2657,13 +2748,17 @@ LRESULT MsgCommand(HWND hwnd, WPARAM wParam, LPARAM lParam)
                 CloseClipboard();
             }
             break;
+        }
 
         case IDM_EDIT_SELECTALL:
+        {
             SendMessage(hwndEdit, SCI_SELECTALL, 0, 0);
             //SendMessage(hwndEdit,SCI_SETSEL,0,(LPARAM)-1);
             break;
+        }
 
-        case IDM_EDIT_SELECTWORD: {
+        case IDM_EDIT_SELECTWORD:
+        {
             int iSel =
                 (int)SendMessage(hwndEdit, SCI_GETSELECTIONEND, 0, 0) -
                 (int)SendMessage(hwndEdit, SCI_GETSELECTIONSTART, 0, 0);
@@ -2717,11 +2812,11 @@ LRESULT MsgCommand(HWND hwnd, WPARAM wParam, LPARAM lParam)
                 int iLineEnd = (int)SendMessage(hwndEdit, SCI_GETLINEENDPOSITION, iLine, 0);
                 SendMessage(hwndEdit, SCI_SETSEL, iLineStart, iLineEnd);
             }
+            break;
         }
 
-        break;
-
-        case IDM_EDIT_SELECTLINE: {
+        case IDM_EDIT_SELECTLINE:
+        {
             int iSelStart = (int)SendMessage(hwndEdit, SCI_GETSELECTIONSTART, 0, 0);
             int iSelEnd = (int)SendMessage(hwndEdit, SCI_GETSELECTIONEND, 0, 0);
             int iLineStart = (int)SendMessage(hwndEdit, SCI_LINEFROMPOSITION, iSelStart, 0);
@@ -2730,47 +2825,64 @@ LRESULT MsgCommand(HWND hwnd, WPARAM wParam, LPARAM lParam)
             iSelEnd = (int)SendMessage(hwndEdit, SCI_POSITIONFROMLINE, iLineEnd + 1, 0);
             SendMessage(hwndEdit, SCI_SETSEL, iSelStart, iSelEnd);
             SendMessage(hwndEdit, SCI_CHOOSECARETX, 0, 0);
+            break;
         }
-        break;
 
         case IDM_EDIT_MOVELINEUP:
+        {
             EditMoveUp(hwndEdit);
             break;
+        }
 
         case IDM_EDIT_MOVELINEDOWN:
+        {
             EditMoveDown(hwndEdit);
             break;
+        }
 
         case IDM_EDIT_DUPLICATELINE:
+        {
             SendMessage(hwndEdit, SCI_LINEDUPLICATE, 0, 0);
             break;
+        }
 
         case IDM_EDIT_CUTLINE:
+        {
             if (flagPasteBoard)
                 bLastCopyFromMe = TRUE;
             SendMessage(hwndEdit, SCI_LINECUT, 0, 0);
             break;
+        }
 
         case IDM_EDIT_COPYLINE:
+        {
             if (flagPasteBoard)
                 bLastCopyFromMe = TRUE;
             SendMessage(hwndEdit, SCI_LINECOPY, 0, 0);
             UpdateToolbar();
             break;
+        }
 
         case IDM_EDIT_DELETELINE:
+        {
             SendMessage(hwndEdit, SCI_LINEDELETE, 0, 0);
             break;
+        }
 
         case IDM_EDIT_DELETELINELEFT:
+        {
             SendMessage(hwndEdit, SCI_DELLINELEFT, 0, 0);
             break;
+        }
 
         case IDM_EDIT_DELETELINERIGHT:
+        {
             SendMessage(hwndEdit, SCI_DELLINERIGHT, 0, 0);
             break;
+        }
 
-        case IDM_EDIT_INDENT: {
+        case IDM_EDIT_INDENT:
+        {
             int iLineSelStart = (int)SendMessage(hwndEdit, SCI_LINEFROMPOSITION,
                                                  (int)SendMessage(hwndEdit, SCI_GETSELECTIONSTART, 0, 0), 0);
             int iLineSelEnd = (int)SendMessage(hwndEdit, SCI_LINEFROMPOSITION,
@@ -2785,10 +2897,11 @@ LRESULT MsgCommand(HWND hwnd, WPARAM wParam, LPARAM lParam)
             else
                 SendMessage(hwndEdit, SCI_TAB, 0, 0);
             SendMessage(hwndEdit, SCI_SETTABINDENTS, bTabIndents, 0);
+            break;
         }
-        break;
 
-        case IDM_EDIT_UNINDENT: {
+        case IDM_EDIT_UNINDENT:
+        {
             int iLineSelStart = (int)SendMessage(hwndEdit, SCI_LINEFROMPOSITION,
                                                  (int)SendMessage(hwndEdit, SCI_GETSELECTIONSTART, 0, 0), 0);
             int iLineSelEnd = (int)SendMessage(hwndEdit, SCI_LINEFROMPOSITION,
@@ -2803,10 +2916,11 @@ LRESULT MsgCommand(HWND hwnd, WPARAM wParam, LPARAM lParam)
             else
                 SendMessage(hwndEdit, SCI_BACKTAB, 0, 0);
             SendMessage(hwndEdit, SCI_SETTABINDENTS, bTabIndents, 0);
+            break;
         }
-        break;
 
         case IDM_EDIT_ENCLOSESELECTION:
+        {
             if (EditEncloseSelectionDlg(hwnd, wchPrefixSelection, wchAppendSelection))
             {
                 BeginWaitCursor();
@@ -2814,56 +2928,73 @@ LRESULT MsgCommand(HWND hwnd, WPARAM wParam, LPARAM lParam)
                 EndWaitCursor();
             }
             break;
+        }
 
         case IDM_EDIT_SELECTIONDUPLICATE:
+        {
             SendMessage(hwndEdit, SCI_BEGINUNDOACTION, 0, 0);
             SendMessage(hwndEdit, SCI_SELECTIONDUPLICATE, 0, 0);
             SendMessage(hwndEdit, SCI_ENDUNDOACTION, 0, 0);
             break;
+        }
 
         case IDM_EDIT_PADWITHSPACES:
+        {
             BeginWaitCursor();
             EditPadWithSpaces(hwndEdit, FALSE, FALSE);
             EndWaitCursor();
             break;
+        }
 
         case IDM_EDIT_STRIP1STCHAR:
+        {
             BeginWaitCursor();
             EditStripFirstCharacter(hwndEdit);
             EndWaitCursor();
             break;
+        }
 
         case IDM_EDIT_STRIPLASTCHAR:
+        {
             BeginWaitCursor();
             EditStripLastCharacter(hwndEdit);
             EndWaitCursor();
             break;
-
+        }
         case IDM_EDIT_TRIMLINES:
+        {
             BeginWaitCursor();
             EditStripTrailingBlanks(hwndEdit, FALSE);
             EndWaitCursor();
             break;
+        }
 
         case IDM_EDIT_COMPRESSWS:
+        {
             BeginWaitCursor();
             EditCompressSpaces(hwndEdit);
             EndWaitCursor();
             break;
+        }
 
         case IDM_EDIT_MERGEBLANKLINES:
+        {
             BeginWaitCursor();
             EditRemoveBlankLines(hwndEdit, TRUE);
             EndWaitCursor();
             break;
+        }
 
         case IDM_EDIT_REMOVEBLANKLINES:
+        {
             BeginWaitCursor();
             EditRemoveBlankLines(hwndEdit, FALSE);
             EndWaitCursor();
             break;
+        }
 
         case IDM_EDIT_MODIFYLINES:
+        {
             if (EditModifyLinesDlg(hwnd, wchPrefixLines, wchAppendLines))
             {
                 BeginWaitCursor();
@@ -2871,8 +3002,10 @@ LRESULT MsgCommand(HWND hwnd, WPARAM wParam, LPARAM lParam)
                 EndWaitCursor();
             }
             break;
+        }
 
         case IDM_EDIT_ALIGN:
+        {
             if (EditAlignDlg(hwnd, &iAlignMode))
             {
                 BeginWaitCursor();
@@ -2880,8 +3013,10 @@ LRESULT MsgCommand(HWND hwnd, WPARAM wParam, LPARAM lParam)
                 EndWaitCursor();
             }
             break;
+        }
 
         case IDM_EDIT_SORTLINES:
+        {
             if (EditSortDlg(hwnd, &iSortOptions))
             {
                 BeginWaitCursor();
@@ -2894,8 +3029,10 @@ LRESULT MsgCommand(HWND hwnd, WPARAM wParam, LPARAM lParam)
                 EndWaitCursor();
             }
             break;
+        }
 
-        case IDM_EDIT_COLUMNWRAP: {
+        case IDM_EDIT_COLUMNWRAP:
+        {
             if (iWrapCol == 0)
                 iWrapCol = iLongLinesLimit;
 
@@ -2984,7 +3121,8 @@ LRESULT MsgCommand(HWND hwnd, WPARAM wParam, LPARAM lParam)
             EndWaitCursor();
             break;
 
-        case IDM_EDIT_INSERT_TAG: {
+        case IDM_EDIT_INSERT_TAG:
+        {
             WCHAR wszOpen[256] = L"";
             WCHAR wszClose[256] = L"";
             if (EditInsertTagDlg(hwnd, wszOpen, wszClose))
@@ -2992,7 +3130,8 @@ LRESULT MsgCommand(HWND hwnd, WPARAM wParam, LPARAM lParam)
         }
         break;
 
-        case IDM_EDIT_INSERT_ENCODING: {
+        case IDM_EDIT_INSERT_ENCODING:
+        {
             if (*mEncoding[iEncoding].pszParseNames)
             {
                 char msz[32];
@@ -3009,7 +3148,8 @@ LRESULT MsgCommand(HWND hwnd, WPARAM wParam, LPARAM lParam)
         break;
 
         case IDM_EDIT_INSERT_SHORTDATE:
-        case IDM_EDIT_INSERT_LONGDATE: {
+        case IDM_EDIT_INSERT_LONGDATE:
+        {
             WCHAR tchDate[128];
             WCHAR tchTime[128];
             WCHAR tchDateTime[256];
@@ -3048,14 +3188,13 @@ LRESULT MsgCommand(HWND hwnd, WPARAM wParam, LPARAM lParam)
 
             uCP = (SendMessage(hwndEdit, SCI_GETCODEPAGE, 0, 0) == SC_CP_UTF8) ? CP_UTF8 : CP_ACP;
             WideCharToMultiByte(uCP, 0, tchDateTime, -1, mszBuf, COUNTOF(mszBuf), NULL, NULL);
-            //iSelStart = SendMessage(hwndEdit,SCI_GETSELECTIONSTART,0,0);
             SendMessage(hwndEdit, SCI_REPLACESEL, 0, (LPARAM)mszBuf);
-            //SendMessage(hwndEdit,SCI_SETANCHOR,(WPARAM)iSelStart,0);
+            break;
         }
-        break;
 
         case IDM_EDIT_INSERT_FILENAME:
-        case IDM_EDIT_INSERT_PATHNAME: {
+        case IDM_EDIT_INSERT_PATHNAME:
+        {
             SHFILEINFO shfi;
             WCHAR *pszInsert;
             WCHAR tchUntitled[32];
@@ -3201,7 +3340,8 @@ LRESULT MsgCommand(HWND hwnd, WPARAM wParam, LPARAM lParam)
             EndWaitCursor();
             break;
 
-        case IDM_EDIT_FINDMATCHINGBRACE: {
+        case IDM_EDIT_FINDMATCHINGBRACE:
+        {
             int iBrace2 = -1;
             int iPos = (int)SendMessage(hwndEdit, SCI_GETCURRENTPOS, 0, 0);
             char c = (char)SendMessage(hwndEdit, SCI_GETCHARAT, iPos, 0);
@@ -3220,7 +3360,8 @@ LRESULT MsgCommand(HWND hwnd, WPARAM wParam, LPARAM lParam)
         }
         break;
 
-        case IDM_EDIT_SELTOMATCHINGBRACE: {
+        case IDM_EDIT_SELTOMATCHINGBRACE:
+        {
             int iBrace2 = -1;
             int iPos = (int)SendMessage(hwndEdit, SCI_GETCURRENTPOS, 0, 0);
             char c = (char)SendMessage(hwndEdit, SCI_GETCHARAT, iPos, 0);
@@ -3812,7 +3953,8 @@ LRESULT MsgCommand(HWND hwnd, WPARAM wParam, LPARAM lParam)
             bSaveSettings = (bSaveSettings) ? FALSE : TRUE;
             break;
 
-        case IDM_VIEW_SAVESETTINGSNOW: {
+        case IDM_VIEW_SAVESETTINGSNOW:
+        {
             BOOL bCreateFailure = FALSE;
 
             if (lstrlen(szIniFile) == 0)
@@ -3877,7 +4019,8 @@ LRESULT MsgCommand(HWND hwnd, WPARAM wParam, LPARAM lParam)
                 SendMessage(hwnd, WM_CLOSE, 0, 0);
             break;
 
-        case CMD_CTRLENTER: {
+        case CMD_CTRLENTER:
+        {
             UINT uCodePage = (SendMessage(hwndEdit, SCI_GETCODEPAGE, 0, 0) == SC_CP_UTF8) ? CP_UTF8 : CP_ACP;
 
             int cchSelection = (int)SendMessage(hwndEdit, SCI_GETSELECTIONEND, 0, 0) - (int)SendMessage(hwndEdit, SCI_GETSELECTIONSTART, 0, 0);
@@ -3928,7 +4071,8 @@ LRESULT MsgCommand(HWND hwnd, WPARAM wParam, LPARAM lParam)
             break;
         }
 
-        case CMD_CTRLBACK: {
+        case CMD_CTRLBACK:
+        {
             int iPos = (int)SendMessage(hwndEdit, SCI_GETCURRENTPOS, 0, 0);
             int iAnchor = (int)SendMessage(hwndEdit, SCI_GETANCHOR, 0, 0);
             int iLine = (int)SendMessage(hwndEdit, SCI_LINEFROMPOSITION, (WPARAM)iPos, 0);
@@ -3949,7 +4093,8 @@ LRESULT MsgCommand(HWND hwnd, WPARAM wParam, LPARAM lParam)
         }
         break;
 
-        case CMD_CTRLDEL: {
+        case CMD_CTRLDEL:
+        {
             int iPos = (int)SendMessage(hwndEdit, SCI_GETCURRENTPOS, 0, 0);
             int iAnchor = (int)SendMessage(hwndEdit, SCI_GETANCHOR, 0, 0);
             int iLine = (int)SendMessage(hwndEdit, SCI_LINEFROMPOSITION, (WPARAM)iPos, 0);
@@ -3976,7 +4121,8 @@ LRESULT MsgCommand(HWND hwnd, WPARAM wParam, LPARAM lParam)
             SendMessage(hwndEdit, SCI_SETTABINDENTS, bTabIndents, 0);
             break;
 
-        case CMD_RECODEDEFAULT: {
+        case CMD_RECODEDEFAULT:
+        {
             WCHAR tchCurFile2[MAX_PATH];
             if (lstrlen(szCurFile))
             {
@@ -3994,7 +4140,8 @@ LRESULT MsgCommand(HWND hwnd, WPARAM wParam, LPARAM lParam)
         }
         break;
 
-        case CMD_RELOADANSI: {
+        case CMD_RELOADANSI:
+        {
             WCHAR tchCurFile2[MAX_PATH];
             if (lstrlen(szCurFile))
             {
@@ -4005,7 +4152,8 @@ LRESULT MsgCommand(HWND hwnd, WPARAM wParam, LPARAM lParam)
         }
         break;
 
-        case CMD_RELOADOEM: {
+        case CMD_RELOADOEM:
+        {
             WCHAR tchCurFile2[MAX_PATH];
             if (lstrlen(szCurFile))
             {
@@ -4016,7 +4164,8 @@ LRESULT MsgCommand(HWND hwnd, WPARAM wParam, LPARAM lParam)
         }
         break;
 
-        case CMD_RELOADASCIIASUTF8: {
+        case CMD_RELOADASCIIASUTF8:
+        {
             WCHAR tchCurFile2[MAX_PATH];
             BOOL _bLoadASCIIasUTF8 = bLoadASCIIasUTF8;
             if (lstrlen(szCurFile))
@@ -4029,7 +4178,8 @@ LRESULT MsgCommand(HWND hwnd, WPARAM wParam, LPARAM lParam)
         }
         break;
 
-        case CMD_RELOADNOFILEVARS: {
+        case CMD_RELOADNOFILEVARS:
+        {
             WCHAR tchCurFile2[MAX_PATH];
             if (lstrlen(szCurFile))
             {
@@ -4063,7 +4213,8 @@ LRESULT MsgCommand(HWND hwnd, WPARAM wParam, LPARAM lParam)
             UpdateLineNumberWidth();
             break;
 
-        case CMD_TIMESTAMPS: {
+        case CMD_TIMESTAMPS:
+        {
             WCHAR wchFind[256] = {0};
             WCHAR wchTemplate[256] = {0};
             WCHAR *pwchSep;
@@ -4114,7 +4265,8 @@ LRESULT MsgCommand(HWND hwnd, WPARAM wParam, LPARAM lParam)
         break;
 
         case CMD_WEBACTION1:
-        case CMD_WEBACTION2: {
+        case CMD_WEBACTION2:
+        {
             BOOL bCmdEnabled = FALSE;
             LPWSTR lpszTemplateName;
             WCHAR szCmdTemplate[256];
@@ -4194,7 +4346,8 @@ LRESULT MsgCommand(HWND hwnd, WPARAM wParam, LPARAM lParam)
 
         case CMD_FINDNEXTSEL:
         case CMD_FINDPREVSEL:
-        case IDM_EDIT_SAVEFIND: {
+        case IDM_EDIT_SAVEFIND:
+        {
             int cchSelection = (int)SendMessage(hwndEdit, SCI_GETSELECTIONEND, 0, 0) -
                                (int)SendMessage(hwndEdit, SCI_GETSELECTIONSTART, 0, 0);
 
@@ -4336,7 +4489,8 @@ LRESULT MsgCommand(HWND hwnd, WPARAM wParam, LPARAM lParam)
             }
             break;
 
-        case CMD_COPYPATHNAME: {
+        case CMD_COPYPATHNAME:
+        {
 
             WCHAR *pszCopy;
             WCHAR tchUntitled[32];
@@ -4363,7 +4517,8 @@ LRESULT MsgCommand(HWND hwnd, WPARAM wParam, LPARAM lParam)
         }
         break;
 
-        case CMD_COPYWINPOS: {
+        case CMD_COPYWINPOS:
+        {
 
             WCHAR wszWinPos[256];
             WINDOWPLACEMENT wndpl;
@@ -4568,7 +4723,7 @@ LRESULT MsgCommand(HWND hwnd, WPARAM wParam, LPARAM lParam)
             break;
     }
 
-    return (0);
+    return FALSE;
 }
 
 //=============================================================================
@@ -4830,7 +4985,8 @@ LRESULT MsgNotify(HWND hwnd, WPARAM wParam, LPARAM lParam)
                 case TBN_QUERYINSERT:
                     return TRUE;
 
-                case TBN_GETBUTTONINFO: {
+                case TBN_GETBUTTONINFO:
+                {
                     if (((LPTBNOTIFY)lParam)->iItem < COUNTOF(tbbMainWnd))
                     {
                         WCHAR tch[256];
@@ -4842,13 +4998,14 @@ LRESULT MsgNotify(HWND hwnd, WPARAM wParam, LPARAM lParam)
                 }
                     return FALSE;
 
-                case TBN_RESET: {
+                case TBN_RESET:
+                {
                     int i;
                     int c = (int)SendMessage(hwndToolbar, TB_BUTTONCOUNT, 0, 0);
                     for (i = 0; i < c; i++)
                         SendMessage(hwndToolbar, TB_DELETEBUTTON, 0, 0);
                     SendMessage(hwndToolbar, TB_ADDBUTTONS, NUMINITIALTOOLS, (LPARAM)tbbMainWnd);
-                    return (0);
+                    return FALSE;
                 }
             }
             break;
@@ -4858,7 +5015,8 @@ LRESULT MsgNotify(HWND hwnd, WPARAM wParam, LPARAM lParam)
             switch (pnmh->code)
             {
 
-                case NM_CLICK: {
+                case NM_CLICK:
+                {
                     LPNMMOUSE pnmm = (LPNMMOUSE)lParam;
 
                     switch (pnmm->dwItemSpec)
@@ -4873,7 +5031,8 @@ LRESULT MsgNotify(HWND hwnd, WPARAM wParam, LPARAM lParam)
                     }
                 }
 
-                case NM_DBLCLK: {
+                case NM_DBLCLK:
+                {
                     int i;
                     LPNMMOUSE pnmm = (LPNMMOUSE)lParam;
 
@@ -4917,7 +5076,8 @@ LRESULT MsgNotify(HWND hwnd, WPARAM wParam, LPARAM lParam)
             switch (pnmh->code)
             {
 
-                case TTN_NEEDTEXT: {
+                case TTN_NEEDTEXT:
+                {
                     WCHAR tch[256];
 
                     if (((LPTOOLTIPTEXT)lParam)->uFlags & TTF_IDISHWND)
@@ -4936,7 +5096,7 @@ LRESULT MsgNotify(HWND hwnd, WPARAM wParam, LPARAM lParam)
             break;
     }
 
-    return (0);
+    return FALSE;
 }
 
 //=============================================================================
@@ -5524,7 +5684,8 @@ void ParseCommandLine()
                             flagAlwaysOnTop = 2;
                         break;
 
-                    case L'P': {
+                    case L'P':
+                    {
                         WCHAR *lp = lp1;
                         if (StrCmpNI(lp1, L"POS:", CSTRLEN(L"POS:")) == 0)
                             lp += CSTRLEN(L"POS:") - 1;
@@ -5640,7 +5801,8 @@ void ParseCommandLine()
                         }
                         break;
 
-                    case L'M': {
+                    case L'M':
+                    {
                         BOOL bFindUp = FALSE;
                         BOOL bRegex = FALSE;
                         BOOL bTransBS = FALSE;
@@ -5907,7 +6069,7 @@ int CheckIniFile(LPWSTR lpszFile, LPCWSTR lpszModule)
         return (1);
     }
 
-    return (0);
+    return FALSE;
 }
 
 int CheckIniFileRedirect(LPWSTR lpszFile, LPCWSTR lpszModule)
@@ -5937,7 +6099,7 @@ int CheckIniFileRedirect(LPWSTR lpszFile, LPCWSTR lpszModule)
             }
         }
     }
-    return (0);
+    return FALSE;
 }
 
 int FindIniFile()
@@ -5951,7 +6113,7 @@ int FindIniFile()
     if (lstrlen(szIniFile))
     {
         if (lstrcmpi(szIniFile, L"*?") == 0)
-            return (0);
+            return FALSE;
         else
         {
             if (!CheckIniFile(szIniFile, tchModule))
@@ -6003,7 +6165,7 @@ int TestIniFile()
     {
         lstrcpy(szIniFile2, L"");
         lstrcpy(szIniFile, L"");
-        return (0);
+        return FALSE;
     }
 
     if (PathIsDirectory(szIniFile) || *CharPrev(szIniFile, StrEnd(szIniFile)) == L'\\')
@@ -6027,7 +6189,7 @@ int TestIniFile()
     {
         lstrcpy(szIniFile2, szIniFile);
         lstrcpy(szIniFile, L"");
-        return (0);
+        return FALSE;
     }
     else
         return (1);
@@ -6070,11 +6232,11 @@ int CreateIniFileEx(LPCWSTR lpszIniFile)
             return (1);
         }
         else
-            return (0);
+            return FALSE;
     }
 
     else
-        return (0);
+        return FALSE;
 }
 
 //=============================================================================
