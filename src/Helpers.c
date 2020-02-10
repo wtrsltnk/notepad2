@@ -337,6 +337,10 @@ BOOL VerifyContrast(COLORREF cr1, COLORREF cr2)
 //
 int CALLBACK EnumFontsProc(CONST LOGFONT *plf, CONST TEXTMETRIC *ptm, DWORD FontType, LPARAM lParam)
 {
+    (void)plf;
+    (void)ptm;
+    (void)FontType;
+
     *((PBOOL)lParam) = TRUE;
     return (FALSE);
 }
@@ -459,7 +463,7 @@ void SetWindowTransparentMode(HWND hwnd, BOOL bTransparentMode)
 
     if (bTransparentMode)
     {
-        if (fp = GetProcAddress(GetModuleHandle(L"User32"), "SetLayeredWindowAttributes"))
+        if ((fp = GetProcAddress(GetModuleHandle(L"User32"), "SetLayeredWindowAttributes")))
         {
             SetWindowLongPtr(hwnd, GWL_EXSTYLE,
                              GetWindowLongPtr(hwnd, GWL_EXSTYLE) | WS_EX_LAYERED);

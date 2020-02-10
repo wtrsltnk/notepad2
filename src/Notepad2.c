@@ -17,7 +17,7 @@
 *
 *
 ******************************************************************************/
-#include "notepad2.h"
+#include "Notepad2.h"
 
 #include "CodeRunner.h"
 #include "Dialogs.h"

@@ -552,7 +552,7 @@ BOOL EditCopyAppend(HWND hwnd)
                 (int)SendMessage(hwnd, SCI_GETSELECTIONSTART, 0, 0);
 
             pszText = LocalAlloc(LPTR, iSelCount + 1);
-            (int)SendMessage(hwnd, SCI_GETSELTEXT, 0, (LPARAM)pszText);
+            SendMessage(hwnd, SCI_GETSELTEXT, 0, (LPARAM)pszText);
         }
     }
 
@@ -611,6 +611,9 @@ BOOL EditCopyAppend(HWND hwnd)
 //
 int EditDetectEOLMode(HWND hwnd, char *lpData, DWORD cbData)
 {
+    (void)hwnd;
+    (void)cbData;
+
     int iEOLMode = iLineEndings[iDefaultEOLMode];
     char *cp = (char *)lpData;
 
@@ -667,7 +670,7 @@ int Encoding_MapIniSetting(BOOL bLoad, int iSetting)
                 return CPI_UTF7;
             default:
             {
-                int i;
+                unsigned int i;
                 for (i = CPI_UTF7 + 1; i < COUNTOF(mEncoding); i++)
                 {
                     if (mEncoding[i].uCodePage == (UINT)iSetting && Encoding_IsValid(i))
@@ -712,9 +715,9 @@ void Encoding_GetLabel(int iEncoding)
         WCHAR *pwsz;
         WCHAR wch[256] = L"";
         GetString(mEncoding[iEncoding].idsName, wch, COUNTOF(wch));
-        if (pwsz = StrChr(wch, L';'))
+        if ((pwsz = StrChr(wch, L';')))
         {
-            if (pwsz = StrChr(CharNext(pwsz), L';'))
+            if ((pwsz = StrChr(CharNext(pwsz), L';')))
             {
                 pwsz = CharNext(pwsz);
             }
@@ -734,7 +737,7 @@ int Encoding_MatchW(LPCWSTR pwszTest)
 
 int Encoding_MatchA(char *pchTest)
 {
-    int i;
+    unsigned int i;
     char chTest[256];
     char *pchSrc = pchTest;
     char *pchDst = chTest;
@@ -753,8 +756,8 @@ int Encoding_MatchA(char *pchTest)
         {
             CPINFO cpi;
             if ((mEncoding[i].uFlags & NCP_INTERNAL) ||
-                IsValidCodePage(mEncoding[i].uCodePage) &&
-                    GetCPInfo(mEncoding[i].uCodePage, &cpi))
+                (IsValidCodePage(mEncoding[i].uCodePage) &&
+                 GetCPInfo(mEncoding[i].uCodePage, &cpi)))
                 return (i);
             else
                 return (-1);
@@ -767,11 +770,11 @@ BOOL Encoding_IsValid(int iTestEncoding)
 {
     CPINFO cpi;
     if (iTestEncoding >= 0 &&
-        iTestEncoding < COUNTOF(mEncoding))
+        iTestEncoding < (int)COUNTOF(mEncoding))
     {
         if ((mEncoding[iTestEncoding].uFlags & NCP_INTERNAL) ||
-            IsValidCodePage(mEncoding[iTestEncoding].uCodePage) &&
-                GetCPInfo(mEncoding[iTestEncoding].uCodePage, &cpi))
+            (IsValidCodePage(mEncoding[iTestEncoding].uCodePage) &&
+             GetCPInfo(mEncoding[iTestEncoding].uCodePage, &cpi)))
         {
             return (TRUE);
         }
@@ -792,7 +795,7 @@ int CmpEncoding(const void *s1, const void *s2)
 
 void Encoding_AddToListView(HWND hwnd, int idSel, BOOL bRecodeOnly)
 {
-    int i;
+    unsigned int i;
     int iSelItem = -1;
     LVITEM lvi;
     WCHAR wchBuf[256];
@@ -821,10 +824,10 @@ void Encoding_AddToListView(HWND hwnd, int idSel, BOOL bRecodeOnly)
 
             lvi.iItem = ListView_GetItemCount(hwnd);
 
-            if (pwsz = StrChr(pEE[i].wch, L';'))
+            if ((pwsz = StrChr(pEE[i].wch, L';')))
             {
                 StrCpyN(wchBuf, CharNext(pwsz), COUNTOF(wchBuf));
-                if (pwsz = StrChr(wchBuf, L';'))
+                if ((pwsz = StrChr(wchBuf, L';')))
                     *pwsz = 0;
             }
             else
@@ -887,7 +890,7 @@ BOOL Encoding_GetFromListView(HWND hwnd, int *pidEncoding)
 
 void Encoding_AddToComboboxEx(HWND hwnd, int idSel, BOOL bRecodeOnly)
 {
-    int i;
+    unsigned int i;
     int iSelItem = -1;
     COMBOBOXEXITEM cbei;
     WCHAR wchBuf[256];
@@ -919,10 +922,10 @@ void Encoding_AddToComboboxEx(HWND hwnd, int idSel, BOOL bRecodeOnly)
 
             cbei.iItem = SendMessage(hwnd, CB_GETCOUNT, 0, 0);
 
-            if (pwsz = StrChr(pEE[i].wch, L';'))
+            if ((pwsz = StrChr(pEE[i].wch, L';')))
             {
                 StrCpyN(wchBuf, CharNext(pwsz), COUNTOF(wchBuf));
-                if (pwsz = StrChr(wchBuf, L';'))
+                if ((pwsz = StrChr(wchBuf, L';')))
                     *pwsz = 0;
             }
             else
@@ -1045,7 +1048,8 @@ BOOL IsUTF8(const char *pTest, int nLength)
         /*       00 01 02 03 04 05 06 07 08 09 0A 0B 0C 0D 0E 0F  */};
 
     /* state table */
-    typedef enum {
+    typedef enum
+    {
         kSTART = 0,
         kA,
         kB,
@@ -2278,7 +2282,7 @@ void EditHex2Char(HWND hwnd)
         if (iSelEnd - iSelStart)
         {
 
-            if (SendMessage(hwnd, SCI_GETSELTEXT, 0, 0) <= COUNTOF(ch))
+            if ((unsigned int)SendMessage(hwnd, SCI_GETSELTEXT, 0, 0) <= COUNTOF(ch))
             {
 
                 SendMessage(hwnd, SCI_GETSELTEXT, 0, (LPARAM)ch);
@@ -2350,7 +2354,7 @@ void EditModifyNumber(HWND hwnd, BOOL bIncrease)
             int iNumber;
             int iWidth;
 
-            if (SendMessage(hwnd, SCI_GETSELTEXT, 0, 0) <= COUNTOF(chNumber))
+            if ((unsigned int)SendMessage(hwnd, SCI_GETSELTEXT, 0, 0) <= COUNTOF(chNumber))
             {
                 SendMessage(hwnd, SCI_GETSELTEXT, 0, (LPARAM)chNumber);
 
@@ -2496,7 +2500,7 @@ void EditTabsToSpaces(HWND hwnd, int nTabWidth, BOOL bOnlyIndentingWS)
     for (iTextW = 0; iTextW < cchTextW; iTextW++)
     {
         WCHAR w = pszTextW[iTextW];
-        if (w == L'\t' && (!bOnlyIndentingWS || bOnlyIndentingWS && bIsLineStart))
+        if (w == L'\t' && (!bOnlyIndentingWS || (bOnlyIndentingWS && bIsLineStart)))
         {
             for (j = 0; j < nTabWidth - i % nTabWidth; j++)
                 pszConvW[cchConvW++] = L' ';
@@ -2641,7 +2645,7 @@ void EditSpacesToTabs(HWND hwnd, int nTabWidth, BOOL bOnlyIndentingWS)
     for (iTextW = 0; iTextW < cchTextW; iTextW++)
     {
         WCHAR w = pszTextW[iTextW];
-        if ((w == L' ' || w == L'\t') && (!bOnlyIndentingWS || bOnlyIndentingWS && bIsLineStart))
+        if ((w == L' ' || w == L'\t') && (!bOnlyIndentingWS || (bOnlyIndentingWS && bIsLineStart)))
         {
             space[j++] = w;
             if (j == nTabWidth - i % nTabWidth || w == L'\t')
@@ -5308,8 +5312,8 @@ INT_PTR CALLBACK EditFindReplaceDlgProcW(HWND hwnd, UINT umsg, WPARAM wParam, LP
 
                     bIsFindDlg = (GetDlgItem(hwnd, IDC_REPLACE) == NULL);
 
-                    if ((bIsFindDlg && LOWORD(wParam) == IDMSG_SWITCHTOREPLACE ||
-                         !bIsFindDlg && LOWORD(wParam) == IDMSG_SWITCHTOFIND))
+                    if ((bIsFindDlg && LOWORD(wParam) == IDMSG_SWITCHTOREPLACE) ||
+                        (!bIsFindDlg && LOWORD(wParam) == IDMSG_SWITCHTOFIND))
                     {
                         GetDlgPos(hwnd, &xFindReplaceDlgSave, &yFindReplaceDlgSave);
                         bSwitchedFindReplace = TRUE;
@@ -6115,6 +6119,7 @@ BOOL EditReplaceAllInSelection(HWND hwnd, LPCEDITFINDREPLACE lpefr, BOOL bShowIn
 //
 INT_PTR CALLBACK EditLinenumDlgProc(HWND hwnd, UINT umsg, WPARAM wParam, LPARAM lParam)
 {
+    (void)lParam;
 
     switch (umsg)
     {
@@ -6281,10 +6286,8 @@ INT_PTR CALLBACK EditModifyLinesDlgProc(HWND hwnd, UINT umsg, WPARAM wParam, LPA
             {
                 if (id_hover != 0)
                 {
-                    int _id_hover = id_hover;
                     id_hover = 0;
                     id_capture = 0;
-                    //InvalidateRect(GetDlgItem(hwnd,id_hover),NULL,FALSE);
                 }
             }
             return FALSE;
@@ -6317,7 +6320,7 @@ INT_PTR CALLBACK EditModifyLinesDlgProc(HWND hwnd, UINT umsg, WPARAM wParam, LPA
             {
                 if (dwId >= 200 && dwId <= 205)
                 {
-                    if (id_capture == dwId || id_capture == 0)
+                    if ((DWORD)id_capture == dwId || id_capture == 0)
                     {
                         if (id_hover != id_capture || id_hover == 0)
                         {
@@ -6327,16 +6330,12 @@ INT_PTR CALLBACK EditModifyLinesDlgProc(HWND hwnd, UINT umsg, WPARAM wParam, LPA
                     }
                     else if (id_hover != 0)
                     {
-                        int _id_hover = id_hover;
                         id_hover = 0;
-                        //InvalidateRect(GetDlgItem(hwnd,_id_hover),NULL,FALSE);
                     }
                 }
                 else if (id_hover != 0)
                 {
-                    int _id_hover = id_hover;
                     id_hover = 0;
-                    //InvalidateRect(GetDlgItem(hwnd,_id_hover),NULL,FALSE);
                 }
                 SetCursor(id_hover != 0 ? hCursorHover : hCursorNormal);
             }
@@ -6362,9 +6361,6 @@ INT_PTR CALLBACK EditModifyLinesDlgProc(HWND hwnd, UINT umsg, WPARAM wParam, LPA
 
         case WM_LBUTTONUP:
         {
-            POINT pt = {LOWORD(lParam), HIWORD(lParam)};
-            HWND hwndHover = ChildWindowFromPoint(hwnd, pt);
-            DWORD dwId = GetWindowLong(hwndHover, GWL_ID);
             if (id_capture != 0)
             {
                 ReleaseCapture();
@@ -7077,7 +7073,7 @@ BOOL FileVars_ParseInt(char *pszData, char *pszName, int *piValue)
     char *pvEnd;
     int itok;
 
-    while (pvStart = StrStrIA(pvStart, pszName))
+    while ((pvStart = StrStrIA(pvStart, pszName)))
     {
         chPrev = (pvStart > pszData) ? *(pvStart - 1) : 0;
         if (!IsCharAlphaNumericA(chPrev) && chPrev != '-' && chPrev != '_')
@@ -7138,7 +7134,7 @@ BOOL FileVars_ParseStr(char *pszData, char *pszName, char *pszValue, int cchValu
     char *pvEnd;
     BOOL bQuoted = FALSE;
 
-    while (pvStart = StrStrIA(pvStart, pszName))
+    while ((pvStart = StrStrIA(pvStart, pszName)))
     {
         chPrev = (pvStart > pszData) ? *(pvStart - 1) : 0;
         if (!IsCharAlphaNumericA(chPrev) && chPrev != '-' && chPrev != '_')
@@ -7216,11 +7212,11 @@ BOOL FileVars_IsValidEncoding(LPFILEVARS lpfv)
     CPINFO cpi;
     if (lpfv->mask & FV_ENCODING &&
         lpfv->iEncoding >= 0 &&
-        lpfv->iEncoding < COUNTOF(mEncoding))
+        lpfv->iEncoding < (int)COUNTOF(mEncoding))
     {
         if ((mEncoding[lpfv->iEncoding].uFlags & NCP_INTERNAL) ||
-            IsValidCodePage(mEncoding[lpfv->iEncoding].uCodePage) &&
-                GetCPInfo(mEncoding[lpfv->iEncoding].uCodePage, &cpi))
+            (IsValidCodePage(mEncoding[lpfv->iEncoding].uCodePage) &&
+             GetCPInfo(mEncoding[lpfv->iEncoding].uCodePage, &cpi)))
         {
             return (TRUE);
         }
