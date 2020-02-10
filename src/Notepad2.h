@@ -24,6 +24,10 @@
 #define _WIN32_WINNT 0x501
 #include <windows.h>
 
+// extern "C" declarations of Scintilla functions
+BOOL Scintilla_RegisterClasses(void *);
+BOOL Scintilla_ReleaseResources();
+
 //==== Main Window ============================================================
 #define WC_NOTEPAD2 L"Notepad2"
 

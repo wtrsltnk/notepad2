@@ -11,7 +11,7 @@
             if (e!=SQL_SUCCESS && e != SQL_SUCCESS_WITH_INFO) {extract_error(s, h, t); goto exit;} \
 })
 
-void extract_error(char *fn, SQLHANDLE handle, SQLSMALLINT type)
+void extract_error(const char *fn, SQLHANDLE handle, SQLSMALLINT type)
 {
     SQLINTEGER i = 0;
 	SQLINTEGER NativeError;

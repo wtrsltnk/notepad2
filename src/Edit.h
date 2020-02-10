@@ -24,10 +24,6 @@
 #define _WIN32_WINNT 0x501
 #include <windows.h>
 
-// extern "C" declarations of Scintilla functions
-BOOL Scintilla_RegisterClasses(void *);
-BOOL Scintilla_ReleaseResources();
-
 typedef struct _editfindreplace
 {
     char szFind[512];
@@ -155,7 +151,7 @@ typedef struct _np2encoding
 {
     UINT uFlags;
     UINT uCodePage;
-    char *pszParseNames;
+    const char *pszParseNames;
     int idsName;
     WCHAR wchLabel[32];
 } NP2ENCODING;

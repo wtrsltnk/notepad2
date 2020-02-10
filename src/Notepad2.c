@@ -301,6 +301,7 @@ int flagDisplayHelp = 0;
 //
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInst, LPSTR lpCmdLine, int nCmdShow)
 {
+    (void)hPrevInst;
 
     MSG msg;
     HWND hwnd;
@@ -467,6 +468,7 @@ BOOL InitApplication(HINSTANCE hInstance)
 //
 HWND InitInstance(HINSTANCE hInstance, LPSTR pszCmdLine, int nCmdShow)
 {
+    (void)pszCmdLine;
 
     RECT rc = {wi.x, wi.y, wi.x + wi.cx, wi.y + wi.cy};
     RECT rc2;
@@ -619,7 +621,7 @@ HWND InitInstance(HINSTANCE hInstance, LPSTR pszCmdLine, int nCmdShow)
         }
         else
         {
-            if (bOpened = FileLoad(FALSE, FALSE, FALSE, FALSE, lpFileArg))
+            if ((bOpened = FileLoad(FALSE, FALSE, FALSE, FALSE, lpFileArg)))
             {
                 if (flagJumpTo)
                 { // Jump to position
@@ -1270,6 +1272,8 @@ LRESULT CALLBACK MainWndProc(HWND hwnd, UINT umsg, WPARAM wParam, LPARAM lParam)
 //
 LRESULT MsgCreate(HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
+    (void)wParam;
+    (void)lParam;
 
     HINSTANCE hInstance = ((LPCREATESTRUCT)lParam)->hInstance;
 
@@ -1466,6 +1470,9 @@ LRESULT MsgCreate(HWND hwnd, WPARAM wParam, LPARAM lParam)
 
 void MsgDestroy(HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
+    (void)wParam;
+    (void)lParam;
+
     static BOOL bShutdownOK = FALSE;
 
     if (!bShutdownOK)
@@ -1562,7 +1569,7 @@ void CreateBars(HWND hwnd, HINSTANCE hInstance)
 
     BOOL bIsAppThemed = PrivateIsAppThemed();
 
-    int i, n;
+    unsigned int i, n;
     WCHAR tchDesc[256];
     WCHAR tchIndex[256];
 
@@ -1606,7 +1613,7 @@ void CreateBars(HWND hwnd, HINSTANCE hInstance)
     {
         if (!SearchPath(NULL, tchToolbarBitmapHot, NULL, COUNTOF(szTmp), szTmp, NULL))
             lstrcpy(szTmp, tchToolbarBitmapHot);
-        if (hbmp = LoadImage(NULL, szTmp, IMAGE_BITMAP, 0, 0, LR_CREATEDIBSECTION | LR_LOADFROMFILE))
+        if ((hbmp = LoadImage(NULL, szTmp, IMAGE_BITMAP, 0, 0, LR_CREATEDIBSECTION | LR_LOADFROMFILE)))
         {
             GetObject(hbmp, sizeof(BITMAP), &bmp);
             himl = ImageList_Create(bmp.bmWidth / NUMTOOLBITMAPS, bmp.bmHeight, ILC_COLOR32 | ILC_MASK, 0, 0);
@@ -1622,7 +1629,7 @@ void CreateBars(HWND hwnd, HINSTANCE hInstance)
     {
         if (!SearchPath(NULL, tchToolbarBitmapDisabled, NULL, COUNTOF(szTmp), szTmp, NULL))
             lstrcpy(szTmp, tchToolbarBitmapDisabled);
-        if (hbmp = LoadImage(NULL, szTmp, IMAGE_BITMAP, 0, 0, LR_CREATEDIBSECTION | LR_LOADFROMFILE))
+        if ((hbmp = LoadImage(NULL, szTmp, IMAGE_BITMAP, 0, 0, LR_CREATEDIBSECTION | LR_LOADFROMFILE)))
         {
             GetObject(hbmp, sizeof(BITMAP), &bmp);
             himl = ImageList_Create(bmp.bmWidth / NUMTOOLBITMAPS, bmp.bmHeight, ILC_COLOR32 | ILC_MASK, 0, 0);
@@ -1727,6 +1734,9 @@ void CreateBars(HWND hwnd, HINSTANCE hInstance)
 //
 void MsgThemeChanged(HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
+    (void)wParam;
+    (void)lParam;
+
     RECT rc, rc2;
     HINSTANCE hInstance = (HINSTANCE)(INT_PTR)GetWindowLongPtr(hwnd, GWLP_HINSTANCE);
 
@@ -1788,6 +1798,7 @@ void MsgThemeChanged(HWND hwnd, WPARAM wParam, LPARAM lParam)
 //
 void MsgSize(HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
+    (void)hwnd;
 
     RECT rc;
     int x, y, cx, cy;
@@ -1862,6 +1873,7 @@ void MsgSize(HWND hwnd, WPARAM wParam, LPARAM lParam)
 //
 void MsgInitMenu(HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
+    (void)lParam;
 
     int i, i2;
     HMENU hmenu = (HMENU)wParam;
@@ -2086,6 +2098,7 @@ void MsgInitMenu(HWND hwnd, WPARAM wParam, LPARAM lParam)
 //
 LRESULT MsgCommand(HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
+    (void)lParam;
 
     switch (LOWORD(wParam))
     {
@@ -3138,7 +3151,7 @@ LRESULT MsgCommand(HWND hwnd, WPARAM wParam, LPARAM lParam)
                 char *p;
                 //int iSelStart;
                 lstrcpynA(msz, mEncoding[iEncoding].pszParseNames, COUNTOF(msz));
-                if (p = StrChrA(msz, ','))
+                if ((p = StrChrA(msz, ',')))
                     *p = 0;
                 //iSelStart = SendMessage(hwndEdit,SCI_GETSELECTIONSTART,0,0);
                 SendMessage(hwndEdit, SCI_REPLACESEL, 0, (LPARAM)msz);
@@ -4228,7 +4241,7 @@ LRESULT MsgCommand(HWND hwnd, WPARAM wParam, LPARAM lParam)
 
             IniGetString(L"Settings2", L"TimeStamp", L"\\$Date:[^\\$]+\\$ | $Date: %Y/%m/%d %H:%M:%S $", wchFind, COUNTOF(wchFind));
 
-            if (pwchSep = StrChr(wchFind, L'|'))
+            if ((pwchSep = StrChr(wchFind, L'|')))
             {
                 lstrcpy(wchTemplate, pwchSep + 1);
                 *pwchSep = 0;
@@ -4288,7 +4301,7 @@ LRESULT MsgCommand(HWND hwnd, WPARAM wParam, LPARAM lParam)
                 cchSelection = (int)SendMessage(hwndEdit, SCI_GETSELECTIONEND, 0, 0) -
                                (int)SendMessage(hwndEdit, SCI_GETSELECTIONSTART, 0, 0);
 
-                if (cchSelection > 0 && cchSelection <= 500 && SendMessage(hwndEdit, SCI_GETSELTEXT, 0, 0) < COUNTOF(mszSelection))
+                if ((cchSelection > 0 && cchSelection <= 500 && SendMessage(hwndEdit, SCI_GETSELTEXT, 0, 0) < (HRESULT)COUNTOF(mszSelection)))
                 {
                     SendMessage(hwndEdit, SCI_GETSELTEXT, 0, (LPARAM)mszSelection);
                     mszSelection[cchSelection] = 0; // zero terminate
@@ -4733,6 +4746,8 @@ LRESULT MsgCommand(HWND hwnd, WPARAM wParam, LPARAM lParam)
 //
 LRESULT MsgNotify(HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
+    (void)wParam;
+    (void)lParam;
 
     LPNMHDR pnmh = (LPNMHDR)lParam;
     struct SCNotification *scn = (struct SCNotification *)lParam;
@@ -4846,7 +4861,7 @@ LRESULT MsgNotify(HWND hwnd, WPARAM wParam, LPARAM lParam)
                             if (iCurLine > 0 /* && iLineLength <= 2*/)
                             {
                                 int iPrevLineLength = (int)SendMessage(hwndEdit, SCI_LINELENGTH, iCurLine - 1, 0);
-                                if (pLineBuf = GlobalAlloc(GPTR, iPrevLineLength + 1))
+                                if ((pLineBuf = GlobalAlloc(GPTR, iPrevLineLength + 1)))
                                 {
                                     SendMessage(hwndEdit, SCI_GETLINE, iCurLine - 1, (LPARAM)pLineBuf);
                                     *(pLineBuf + iPrevLineLength) = '\0';
@@ -4987,7 +5002,7 @@ LRESULT MsgNotify(HWND hwnd, WPARAM wParam, LPARAM lParam)
 
                 case TBN_GETBUTTONINFO:
                 {
-                    if (((LPTBNOTIFY)lParam)->iItem < COUNTOF(tbbMainWnd))
+                    if ((((LPTBNOTIFY)lParam)->iItem < (int)COUNTOF(tbbMainWnd)))
                     {
                         WCHAR tch[256];
                         GetString(tbbMainWnd[((LPTBNOTIFY)lParam)->iItem].idCommand, tch, COUNTOF(tch));
@@ -6210,7 +6225,7 @@ int CreateIniFileEx(LPCWSTR lpszIniFile)
         HANDLE hFile;
         WCHAR *pwchTail;
 
-        if (pwchTail = StrRChrW(lpszIniFile, NULL, L'\\'))
+        if ((pwchTail = StrRChrW(lpszIniFile, NULL, L'\\')))
         {
             *pwchTail = 0;
             SHCreateDirectoryEx(NULL, lpszIniFile, NULL);
@@ -6534,7 +6549,7 @@ BOOL FileLoad(BOOL bDontSave, BOOL bNew, BOOL bReload, BOOL bNoEncDetect, LPCWST
                                       GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE,
                                       NULL, CREATE_NEW, FILE_ATTRIBUTE_NORMAL, NULL);
             dwLastIOError = GetLastError();
-            if (fSuccess = (hFile != INVALID_HANDLE_VALUE))
+            if ((fSuccess = (hFile != INVALID_HANDLE_VALUE)))
             {
                 CloseHandle(hFile);
                 FileVars_Init(NULL, 0, &fvCurFile);
@@ -6647,7 +6662,7 @@ BOOL FileSave(BOOL bSaveAlways, BOOL bAsk, BOOL bSaveAs, BOOL bSaveCopy)
         }
     }
 
-    if (!bSaveAlways && (!bModified && iEncoding == iOriginalEncoding || bIsEmptyNewFile) && !bSaveAs)
+    if (!bSaveAlways && ((!bModified && iEncoding == iOriginalEncoding) || bIsEmptyNewFile) && !bSaveAs)
         return TRUE;
 
     if (bAsk)
@@ -6701,7 +6716,7 @@ BOOL FileSave(BOOL bSaveAlways, BOOL bAsk, BOOL bSaveAs, BOOL bSaveCopy)
 
         if (SaveFileDlg(hwndMain, tchFile, COUNTOF(tchFile), tchInitialDir))
         {
-            if (fSuccess = FileIO(FALSE, tchFile, FALSE, &iEncoding, &iEOLMode, NULL, NULL, &bCancelDataLoss, bSaveCopy))
+            if ((fSuccess = FileIO(FALSE, tchFile, FALSE, &iEncoding, &iEOLMode, NULL, NULL, &bCancelDataLoss, bSaveCopy)))
             {
                 if (!bSaveCopy)
                 {
@@ -7476,6 +7491,11 @@ void InstallFileWatching(LPCWSTR lpszFile)
 //
 void CALLBACK WatchTimerProc(HWND hwnd, UINT uMsg, UINT_PTR idEvent, DWORD dwTime)
 {
+    (void)hwnd;
+    (void)uMsg;
+    (void)idEvent;
+    (void)dwTime;
+
     if (bRunningWatch)
     {
         if (dwChangeNotifyTime > 0 && GetTickCount() - dwChangeNotifyTime > dwAutoReloadTimeout)
@@ -7541,6 +7561,11 @@ void CALLBACK WatchTimerProc(HWND hwnd, UINT uMsg, UINT_PTR idEvent, DWORD dwTim
 //
 void CALLBACK PasteBoardTimer(HWND hwnd, UINT uMsg, UINT_PTR idEvent, DWORD dwTime)
 {
+    (void)hwnd;
+    (void)uMsg;
+    (void)idEvent;
+    (void)dwTime;
+
     if (dwLastCopyTime > 0 && GetTickCount() - dwLastCopyTime > 200)
     {
 

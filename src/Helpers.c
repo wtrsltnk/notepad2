@@ -715,7 +715,7 @@ void MakeColorPickButton(HWND hwnd, int nCtlId, HINSTANCE hInstance, COLORREF cr
     if (SendMessage(hwndCtl, BCM_GETIMAGELIST, 0, (LPARAM)&bi))
         himlOld = bi.himl;
 
-    if (IsWindowEnabled(hwndCtl) && crColor != -1)
+    if (IsWindowEnabled(hwndCtl) && crColor != (COLORREF)-1)
     {
         colormap[0].from = RGB(0x00, 0x00, 0x00);
         colormap[0].to = GetSysColor(COLOR_3DSHADOW);
@@ -726,7 +726,7 @@ void MakeColorPickButton(HWND hwnd, int nCtlId, HINSTANCE hInstance, COLORREF cr
         colormap[0].to = RGB(0xFF, 0xFF, 0xFF);
     }
 
-    if (IsWindowEnabled(hwndCtl) && crColor != -1)
+    if (IsWindowEnabled(hwndCtl) && crColor != (COLORREF)-1)
     {
         if (crColor == RGB(0xFF, 0xFF, 0xFF))
             crColor = RGB(0xFF, 0xFF, 0xFE);
@@ -864,13 +864,13 @@ int Toolbar_SetButtons(HWND hwnd, int cmdBase, LPCWSTR lpszButtons, LPCTBBUTTON 
 {
     WCHAR tchButtons[512];
     WCHAR *p;
-    int i, c;
+    unsigned int i, c;
     int iCmd;
 
     ZeroMemory(tchButtons, COUNTOF(tchButtons) * sizeof(tchButtons[0]));
     lstrcpyn(tchButtons, lpszButtons, COUNTOF(tchButtons) - 2);
     TrimString(tchButtons);
-    while (p = StrStr(tchButtons, L"  "))
+    while ((p = StrStr(tchButtons, L"  ")))
         MoveMemory((WCHAR *)p, (WCHAR *)p + 1, (lstrlen(p) + 1) * sizeof(WCHAR));
 
     c = (int)SendMessage(hwnd, TB_BUTTONCOUNT, 0, 0);
@@ -886,7 +886,7 @@ int Toolbar_SetButtons(HWND hwnd, int cmdBase, LPCWSTR lpszButtons, LPCTBBUTTON 
         if (swscanf(p, L"%i", &iCmd) == 1)
         {
             iCmd = (iCmd == 0) ? 0 : iCmd + cmdBase - 1;
-            for (i = 0; i < ctbb; i++)
+            for (i = 0; i < (unsigned int)ctbb; i++)
             {
                 if (ptbb[i].idCommand == iCmd)
                 {
@@ -1096,11 +1096,11 @@ BOOL PathGetLnkPath(LPCWSTR pszLnkFile, LPWSTR pszResPath, int cchResPath)
 
     if (SUCCEEDED(CoCreateInstance(&CLSID_ShellLink, NULL,
                                    CLSCTX_INPROC_SERVER,
-                                   &IID_IShellLink, &psl)))
+                                   &IID_IShellLink, (LPVOID)&psl)))
     {
         IPersistFile *ppf;
 
-        if (SUCCEEDED(psl->lpVtbl->QueryInterface(psl, &IID_IPersistFile, &ppf)))
+        if (SUCCEEDED(psl->lpVtbl->QueryInterface(psl, &IID_IPersistFile, (LPVOID)&ppf)))
         {
             WORD wsz[MAX_PATH];
 
@@ -1217,11 +1217,11 @@ BOOL PathCreateDeskLnk(LPCWSTR pszDocument)
 
     if (SUCCEEDED(CoCreateInstance(&CLSID_ShellLink, NULL,
                                    CLSCTX_INPROC_SERVER,
-                                   &IID_IShellLink, &psl)))
+                                   &IID_IShellLink, (LPVOID)&psl)))
     {
         IPersistFile *ppf;
 
-        if (SUCCEEDED(psl->lpVtbl->QueryInterface(psl, &IID_IPersistFile, &ppf)))
+        if (SUCCEEDED(psl->lpVtbl->QueryInterface(psl, &IID_IPersistFile, (LPVOID)&ppf)))
         {
             WORD wsz[MAX_PATH];
 
@@ -1273,11 +1273,11 @@ BOOL PathCreateFavLnk(LPCWSTR pszName, LPCWSTR pszTarget, LPCWSTR pszDir)
 
     if (SUCCEEDED(CoCreateInstance(&CLSID_ShellLink, NULL,
                                    CLSCTX_INPROC_SERVER,
-                                   &IID_IShellLink, &psl)))
+                                   &IID_IShellLink, (LPVOID)&psl)))
     {
         IPersistFile *ppf;
 
-        if (SUCCEEDED(psl->lpVtbl->QueryInterface(psl, &IID_IPersistFile, &ppf)))
+        if (SUCCEEDED(psl->lpVtbl->QueryInterface(psl, &IID_IPersistFile, (LPVOID)&ppf)))
         {
             WORD wsz[MAX_PATH];
 
@@ -1413,7 +1413,7 @@ void PrepareFilterStr(LPWSTR lpFilter)
 void StrTab2Space(LPWSTR lpsz)
 {
     WCHAR *c = lpsz;
-    while (c = StrChr(lpsz, L'\t'))
+    while ((c = StrChr(lpsz, L'\t')))
         *c = L' ';
 }
 
@@ -1424,7 +1424,7 @@ void StrTab2Space(LPWSTR lpsz)
 void PathFixBackslashes(LPWSTR lpsz)
 {
     WCHAR *c = lpsz;
-    while (c = StrChr(c, L'/'))
+    while ((c = StrChr(c, L'/')))
     {
         if (*CharPrev(lpsz, c) == L':' && *CharNext(c) == L'/')
             c += 2;
@@ -1882,7 +1882,7 @@ BOOL GetThemedDialogFont(LPWSTR lpFaceName, WORD *wSize)
     iLogPixelsY = GetDeviceCaps(hDC, LOGPIXELSY);
     ReleaseDC(NULL, hDC);
 
-    if (hModUxTheme = GetModuleHandle(L"uxtheme.dll"))
+    if ((hModUxTheme = GetModuleHandle(L"uxtheme.dll")))
     {
         if ((BOOL)(GetProcAddress(hModUxTheme, "IsAppThemed"))())
         {
@@ -2083,8 +2083,7 @@ HWND CreateThemedDialogParam(
 *
 *  UnSlash functions
 *  Mostly taken from SciTE, (c) Neil Hodgson, http://www.scintilla.org
-*
-/
+*/
 
 /**
  * Is the character an octal digit?
