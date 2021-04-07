@@ -483,7 +483,7 @@ target_include_directories(Notepad2Scintilla
   PRIVATE "scintilla/src")
 
 target_compile_features(Notepad2Scintilla
-  PUBLIC cxx_std_17)
+  PRIVATE cxx_std_17)
 
 target_link_libraries(Notepad2Scintilla
   PUBLIC imm32.lib)
@@ -532,12 +532,6 @@ target_sources(Notepad2
   PUBLIC "src/Edit.h"
   PUBLIC "src/Styles.h"
   PUBLIC "src/resource.h")
-
-target_sources(Notepad2
-  PUBLIC "src/CodeRunner.cxx"
-  PUBLIC "src/CodeRunner.h"
-  PUBLIC "src/odbcsql.cpp"
-  PUBLIC "src/odbcsql.h")
 
 target_sources(Notepad2
   PUBLIC "src/Print.cpp"
@@ -592,7 +586,7 @@ target_include_directories(Notepad2
   PUBLIC "include")
 
 target_compile_features(Notepad2
-  PUBLIC cxx_std_17)
+  PRIVATE cxx_std_17)
 
 target_link_libraries(Notepad2
   PRIVATE Notepad2Scintilla

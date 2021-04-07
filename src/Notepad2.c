@@ -19,7 +19,6 @@
 ******************************************************************************/
 #include "Notepad2.h"
 
-#include "CodeRunner.h"
 #include "Dialogs.h"
 #include "Edit.h"
 #include "Helpers.h"
@@ -257,7 +256,6 @@ BOOL fIsElevated = FALSE;
 WCHAR wchWndClass[16] = WC_NOTEPAD2;
 
 HINSTANCE g_hInstance;
-UINT16 g_uWinVer;
 WCHAR g_wchAppUserModelID[32] = L"";
 WCHAR g_wchWorkingDirectory[MAX_PATH] = L"";
 
@@ -314,10 +312,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInst, LPSTR lpCmdLine, in
     // Set global variable g_hInstance
     g_hInstance = hInstance;
 
-    // Set the Windows version global variable
-    g_uWinVer = LOWORD(GetVersion());
-    g_uWinVer = MAKEWORD(HIBYTE(g_uWinVer), LOBYTE(g_uWinVer));
-
     // Don't keep working directory locked
     GetCurrentDirectory(COUNTOF(g_wchWorkingDirectory), g_wchWorkingDirectory);
     GetModuleFileName(NULL, wchWorkingDirectory, COUNTOF(wchWorkingDirectory));
@@ -326,8 +320,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInst, LPSTR lpCmdLine, in
 
     SetErrorMode(SEM_FAILCRITICALERRORS | SEM_NOOPENFILEERRORBOX);
 
-    // check if running at least on Windows 2000
-    if (!Is2k())
+    // check if running at least on Windows XP
+    if (!IsWindowsXPOrGreater())
     {
         LPVOID lpMsgBuf;
         FormatMessage(
@@ -1393,7 +1387,7 @@ LRESULT MsgCreate(HWND hwnd, WPARAM wParam, LPARAM lParam)
         SetWindowLongPtr(hwndEdit, GWL_EXSTYLE, GetWindowLongPtr(hwndEdit, GWL_EXSTYLE) & ~WS_EX_CLIENTEDGE);
         SetWindowPos(hwndEdit, NULL, 0, 0, 0, 0, SWP_NOZORDER | SWP_NOMOVE | SWP_NOSIZE | SWP_FRAMECHANGED);
 
-        if (IsVista())
+        if (IsWindowsVistaOrGreater())
         {
             cxEditFrame = 0;
             cyEditFrame = 0;
@@ -1600,7 +1594,7 @@ void CreateBars(HWND hwnd, HINSTANCE hInstance)
         hbmpCopy = CopyImage(hbmp, IMAGE_BITMAP, 0, 0, LR_CREATEDIBSECTION);
     }
     GetObject(hbmp, sizeof(BITMAP), &bmp);
-    if (!IsXP())
+    if (!IsWindowsXPOrGreater())
         BitmapMergeAlpha(hbmp, GetSysColor(COLOR_3DFACE));
     himl = ImageList_Create(bmp.bmWidth / NUMTOOLBITMAPS, bmp.bmHeight, ILC_COLOR32 | ILC_MASK, 0, 0);
     ImageList_AddMasked(himl, hbmp, CLR_DEFAULT);
@@ -1645,9 +1639,9 @@ void CreateBars(HWND hwnd, HINSTANCE hInstance)
         BOOL fProcessed = FALSE;
         if (flagToolbarLook == 1)
             fProcessed = BitmapAlphaBlend(hbmpCopy, GetSysColor(COLOR_3DFACE), 0x60);
-        else if (flagToolbarLook == 2 || (!IsXP() && flagToolbarLook == 0))
+        else if (flagToolbarLook == 2 || (!IsWindowsXPOrGreater() && flagToolbarLook == 0))
             fProcessed = BitmapGrayScale(hbmpCopy);
-        if (fProcessed && !IsXP())
+        if (fProcessed && !IsWindowsXPOrGreater())
             BitmapMergeAlpha(hbmpCopy, GetSysColor(COLOR_3DFACE));
         if (fProcessed)
         {
@@ -1749,7 +1743,7 @@ void MsgThemeChanged(HWND hwnd, WPARAM wParam, LPARAM lParam)
         SetWindowLongPtr(hwndEdit, GWL_EXSTYLE, GetWindowLongPtr(hwndEdit, GWL_EXSTYLE) & ~WS_EX_CLIENTEDGE);
         SetWindowPos(hwndEdit, NULL, 0, 0, 0, 0, SWP_NOZORDER | SWP_FRAMECHANGED | SWP_NOMOVE | SWP_NOSIZE);
 
-        if (IsVista())
+        if (IsWindowsVistaOrGreater())
         {
             cxEditFrame = 0;
             cyEditFrame = 0;
@@ -2106,8 +2100,8 @@ LRESULT MsgCommand(HWND hwnd, WPARAM wParam, LPARAM lParam)
         case IDM_FILE_NEW:
         {
             FileLoad(FALSE, TRUE, FALSE, FALSE, L"");
-            break;
         }
+        break;
 
         case IDM_FILE_OPEN:
         {
@@ -2117,43 +2111,46 @@ LRESULT MsgCommand(HWND hwnd, WPARAM wParam, LPARAM lParam)
 
         case IDM_FILE_REVERT:
         {
-            if (lstrlen(szCurFile))
+            if (!lstrlen(szCurFile))
             {
+                break;
+            }
 
-                WCHAR tchCurFile2[MAX_PATH];
+            WCHAR tchCurFile2[MAX_PATH];
 
-                int iCurPos = (int)SendMessage(hwndEdit, SCI_GETCURRENTPOS, 0, 0);
-                int iAnchorPos = (int)SendMessage(hwndEdit, SCI_GETANCHOR, 0, 0);
-                int iVisTopLine = (int)SendMessage(hwndEdit, SCI_GETFIRSTVISIBLELINE, 0, 0);
-                int iDocTopLine = (int)SendMessage(hwndEdit, SCI_DOCLINEFROMVISIBLE, (WPARAM)iVisTopLine, 0);
-                int iXOffset = (int)SendMessage(hwndEdit, SCI_GETXOFFSET, 0, 0);
+            int iCurPos = (int)SendMessage(hwndEdit, SCI_GETCURRENTPOS, 0, 0);
+            int iAnchorPos = (int)SendMessage(hwndEdit, SCI_GETANCHOR, 0, 0);
+            int iVisTopLine = (int)SendMessage(hwndEdit, SCI_GETFIRSTVISIBLELINE, 0, 0);
+            int iDocTopLine = (int)SendMessage(hwndEdit, SCI_DOCLINEFROMVISIBLE, (WPARAM)iVisTopLine, 0);
+            int iXOffset = (int)SendMessage(hwndEdit, SCI_GETXOFFSET, 0, 0);
 
-                if ((bModified || iEncoding != iOriginalEncoding) && MsgBox(MBOKCANCEL, IDS_ASK_REVERT) != IDOK)
-                    return FALSE;
+            if ((bModified || iEncoding != iOriginalEncoding) && MsgBox(MBOKCANCEL, IDS_ASK_REVERT) != IDOK)
+                return FALSE;
 
-                lstrcpy(tchCurFile2, szCurFile);
+            lstrcpy(tchCurFile2, szCurFile);
 
-                iWeakSrcEncoding = iEncoding;
-                if (FileLoad(TRUE, FALSE, TRUE, FALSE, tchCurFile2))
+            iWeakSrcEncoding = iEncoding;
+            if (!FileLoad(TRUE, FALSE, TRUE, FALSE, tchCurFile2))
+            {
+                break;
+            }
+
+            if (SendMessage(hwndEdit, SCI_GETLENGTH, 0, 0) >= 4)
+            {
+                char tch[5] = "";
+                SendMessage(hwndEdit, SCI_GETTEXT, 5, (LPARAM)tch);
+                if (lstrcmpiA(tch, ".LOG") != 0)
                 {
-                    if (SendMessage(hwndEdit, SCI_GETLENGTH, 0, 0) >= 4)
-                    {
-                        char tch[5] = "";
-                        SendMessage(hwndEdit, SCI_GETTEXT, 5, (LPARAM)tch);
-                        if (lstrcmpiA(tch, ".LOG") != 0)
-                        {
-                            int iNewTopLine;
-                            SendMessage(hwndEdit, SCI_SETSEL, iAnchorPos, iCurPos);
-                            SendMessage(hwndEdit, SCI_ENSUREVISIBLE, (WPARAM)iDocTopLine, 0);
-                            iNewTopLine = (int)SendMessage(hwndEdit, SCI_GETFIRSTVISIBLELINE, 0, 0);
-                            SendMessage(hwndEdit, SCI_LINESCROLL, 0, (LPARAM)iVisTopLine - iNewTopLine);
-                            SendMessage(hwndEdit, SCI_SETXOFFSET, (WPARAM)iXOffset, 0);
-                        }
-                    }
+                    int iNewTopLine;
+                    SendMessage(hwndEdit, SCI_SETSEL, iAnchorPos, iCurPos);
+                    SendMessage(hwndEdit, SCI_ENSUREVISIBLE, (WPARAM)iDocTopLine, 0);
+                    iNewTopLine = (int)SendMessage(hwndEdit, SCI_GETFIRSTVISIBLELINE, 0, 0);
+                    SendMessage(hwndEdit, SCI_LINESCROLL, 0, (LPARAM)iVisTopLine - iNewTopLine);
+                    SendMessage(hwndEdit, SCI_SETXOFFSET, (WPARAM)iXOffset, 0);
                 }
             }
+            break;
         }
-        break;
 
         case IDM_FILE_SAVE:
         {
@@ -2198,8 +2195,8 @@ LRESULT MsgCommand(HWND hwnd, WPARAM wParam, LPARAM lParam)
                                iPathNameFormat, bModified || iEncoding != iOriginalEncoding,
                                IDS_READONLY, bReadOnly, szTitleExcerpt);
             }
-            break;
         }
+        break;
 
         case IDM_FILE_BROWSE:
         {
@@ -2396,15 +2393,16 @@ LRESULT MsgCommand(HWND hwnd, WPARAM wParam, LPARAM lParam)
         {
             if (bSaveBeforeRunningTools && !FileSave(FALSE, TRUE, FALSE, FALSE))
                 break;
+
             OpenWithDlg(hwnd, szCurFile);
-            break;
         }
+        break;
 
         case IDM_FILE_PAGESETUP:
         {
             EditPrintSetup(hwndEdit);
-            break;
         }
+        break;
 
         case IDM_FILE_PRINT:
         {
@@ -4073,11 +4071,6 @@ LRESULT MsgCommand(HWND hwnd, WPARAM wParam, LPARAM lParam)
             LocalFree(pszText);
 
             int cchLexer = (int)SendMessage(hwndEdit, SCI_GETLEXER, 0, 0);
-
-            CodeRunner_ExecuteModel model = {
-                pszTextW,
-                cchLexer};
-            CodeRunner_Execute(model);
 
             LocalFree(pszTextW);
             LocalFree(pszSelectionW);
@@ -6009,7 +6002,7 @@ void LoadFlags()
     if (IniSectionGetInt(pIniSection, L"NoFadeHidden", 0))
         flagNoFadeHidden = 1;
 
-    flagToolbarLook = IniSectionGetInt(pIniSection, L"ToolbarLook", IsXP() ? 1 : 2);
+    flagToolbarLook = IniSectionGetInt(pIniSection, L"ToolbarLook", IsWindowsXPOrGreater() ? 1 : 2);
     flagToolbarLook = max(min(flagToolbarLook, 2), 0);
 
     if (IniSectionGetInt(pIniSection, L"SimpleIndentGuides", 0))
@@ -7251,7 +7244,7 @@ BOOL RelaunchMultiInst()
 BOOL RelaunchElevated()
 {
 
-    if (!IsVista() || fIsElevated || !flagRelaunchElevated || flagDisplayHelp)
+    if (!IsWindowsVistaOrGreater() || fIsElevated || !flagRelaunchElevated || flagDisplayHelp)
         return (FALSE);
 
     else

@@ -23,12 +23,12 @@
 
 #define _WIN32_WINNT 0x501
 #include <windows.h>
+#include <versionhelpers.h>
 
 #include <Scintilla.h>
 #include <commctrl.h>
 
 extern HINSTANCE g_hInstance;
-extern UINT16 g_uWinVer;
 
 #define COUNTOF(ar) (sizeof(ar) / sizeof(ar[0]))
 #define CSTRLEN(s) (COUNTOF(s) - 1)
@@ -76,9 +76,6 @@ static void EndWaitCursor()
 }
 
 #define Is2k() (g_uWinVer >= 0x0500)
-#define IsXP() (g_uWinVer >= 0x0501)
-#define IsVista() (g_uWinVer >= 0x0600)
-#define IsW7() (g_uWinVer >= 0x0601)
 
 BOOL PrivateIsAppThemed();
 HRESULT PrivateSetCurrentProcessExplicitAppUserModelID(PCWSTR);

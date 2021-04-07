@@ -170,7 +170,7 @@ BOOL IsElevated()
     BOOL bIsElevated = FALSE;
     HANDLE hToken = NULL;
 
-    if (!IsVista())
+    if (!IsWindowsVistaOrGreater())
         return (FALSE);
 
     if (OpenProcessToken(GetCurrentProcess(), TOKEN_QUERY, &hToken))
@@ -200,7 +200,7 @@ BOOL IsElevated()
 //{
 //  FARPROC pfnSetWindowTheme;
 //
-//  if (IsVista()) {
+//  if (IsWindowsVistaOrGreater() {
 //    if (hModUxTheme) {
 //      pfnSetWindowTheme = GetProcAddress(hModUxTheme,"SetWindowTheme");
 //

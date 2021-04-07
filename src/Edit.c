@@ -1808,7 +1808,7 @@ void EditTitleCase(HWND hwnd)
 
             cchTextW = MultiByteToWideChar(cpEdit, 0, pszText, iSelCount, pszTextW, (int)GlobalSize(pszTextW) / sizeof(WCHAR));
 
-            if (IsW7())
+            if (IsWindows7OrGreater())
             {
 
                 LPWSTR pszMappedW = LocalAlloc(LPTR, LocalSize(pszTextW));
