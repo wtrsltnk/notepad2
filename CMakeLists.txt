@@ -578,6 +578,10 @@ target_sources(Notepad2
   PUBLIC "scintilla/lexlib/LexerModule.h"
   PUBLIC "scintilla/src/Catalogue.h")
 
+target_sources(Notepad2
+  PUBLIC "src/Post.cpp"
+  PUBLIC "src/Post.h")
+
 target_include_directories(Notepad2
   PUBLIC "scintilla/include"
   PUBLIC "scintilla/lexlib"

@@ -2409,18 +2409,28 @@ LRESULT MsgCommand(HWND hwnd, WPARAM wParam, LPARAM lParam)
 
         case IDM_FILE_POST:
         {
-            if (pLexCurrent->rid == 63018) // lexSQL
+            char *lpData;
+            DWORD cbData;
+            LRESULT rSelectionStart;
+            LRESULT rSelectionEnd;
+
+            // get text
+            cbData = (int)SendMessage(hwndEdit, SCI_GETLENGTH, 0, 0);
+            if (cbData > 1024 * 1024 * 8)
             {
-                MessageBox(hwnd, L"Execute SQL", L"go", 0);
+                MessageBox(hwnd, L"The content is too large to post", L"go", 0);
+                break;
             }
-            if (pLexCurrent->rid == 63010) // lexJS
-            {
-                MessageBox(hwnd, L"Post JSON", L"go", 0);
-            }
-            if (pLexCurrent->rid == 63002) // lexXML
-            {
-                MessageBox(hwnd, L"Post XML", L"go", 0);
-            }
+
+            lpData = GlobalAlloc(GPTR, cbData + 1);
+            SendMessage(hwndEdit, SCI_GETTEXT, GlobalSize(lpData), (LPARAM)lpData);
+
+            rSelectionEnd = SendMessage(hwndEdit, SCI_GETSELECTIONEND, 0, 0);
+            rSelectionStart = SendMessage(hwndEdit, SCI_GETSELECTIONSTART, 0, 0);
+
+            PostContent(lpData, rSelectionStart, rSelectionEnd);
+
+            GlobalFree(lpData);
             break;
         }
 

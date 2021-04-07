@@ -21,6 +21,8 @@
 #ifndef POST_H
 #define POST_H
 
-#endif // POST
+void PostContent(const char *content, int selectionStart, int selectionEnd);
+
+#endif
 
 // End of Post.h

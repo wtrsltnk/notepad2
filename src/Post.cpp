@@ -19,9 +19,10 @@
 *
 ******************************************************************************/
 
-extern "C" {
-#include "Dialogs.h"
-#include "Helpers.h"
+#include "Post.h"
+
+void PostContent(const char *content, int selectionStart, int selectionEnd)
+{
 }
 
 // End of Post.cpp
