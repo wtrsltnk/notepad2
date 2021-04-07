@@ -82,6 +82,7 @@ BEGIN
             MENUITEM "Execute &Document\tCtrl+L",   IDM_FILE_LAUNCH
             MENUITEM "&Open with...\tAlt+L",        IDM_FILE_OPENWITH
             MENUITEM "&Command...\tCtrl+R",         IDM_FILE_RUN
+            MENUITEM "&Post...\tCtrl+Alt+L",        IDM_FILE_POST
         END
         MENUITEM SEPARATOR
         POPUP "&Encoding"
@@ -427,6 +428,7 @@ BEGIN
                                                     NOINVERT
     "L",            IDM_FILE_LAUNCH,        VIRTKEY, CONTROL, NOINVERT
     "L",            IDM_FILE_OPENWITH,      VIRTKEY, ALT, NOINVERT
+    "L",            IDM_FILE_POST,          VIRTKEY, CONTROL, ALT, NOINVERT
     "L",            IDM_VIEW_LONGLINEMARKER, VIRTKEY, SHIFT, CONTROL,
                                                     NOINVERT
     "M",            IDM_FILE_BROWSE,        VIRTKEY, CONTROL, NOINVERT

@@ -21,6 +21,7 @@
 
 #include "Dialogs.h"
 #include "Edit.h"
+#include "Post.h"
 #include "Helpers.h"
 #include "SciLexer.h"
 #include "Styles.h"
@@ -2100,8 +2101,8 @@ LRESULT MsgCommand(HWND hwnd, WPARAM wParam, LPARAM lParam)
         case IDM_FILE_NEW:
         {
             FileLoad(FALSE, TRUE, FALSE, FALSE, L"");
+            break;
         }
-        break;
 
         case IDM_FILE_OPEN:
         {
@@ -2172,31 +2173,34 @@ LRESULT MsgCommand(HWND hwnd, WPARAM wParam, LPARAM lParam)
 
         case IDM_FILE_READONLY:
         {
-            if (lstrlen(szCurFile))
+            if (!lstrlen(szCurFile))
             {
-                DWORD dwFileAttributes = GetFileAttributes(szCurFile);
-                if (dwFileAttributes != INVALID_FILE_ATTRIBUTES)
-                {
-                    if (bReadOnly)
-                        dwFileAttributes = (dwFileAttributes & ~FILE_ATTRIBUTE_READONLY);
-                    else
-                        dwFileAttributes |= FILE_ATTRIBUTE_READONLY;
-                    if (!SetFileAttributes(szCurFile, dwFileAttributes))
-                        MsgBox(MBWARN, IDS_READONLY_MODIFY, szCurFile);
-                }
-                else
-                    MsgBox(MBWARN, IDS_READONLY_MODIFY, szCurFile);
-
-                dwFileAttributes = GetFileAttributes(szCurFile);
-                if (dwFileAttributes != INVALID_FILE_ATTRIBUTES)
-                    bReadOnly = (dwFileAttributes & FILE_ATTRIBUTE_READONLY);
-
-                SetWindowTitle(hwnd, uidsAppTitle, fIsElevated, IDS_UNTITLED, szCurFile,
-                               iPathNameFormat, bModified || iEncoding != iOriginalEncoding,
-                               IDS_READONLY, bReadOnly, szTitleExcerpt);
+                break;
             }
+
+            DWORD dwFileAttributes = GetFileAttributes(szCurFile);
+            if (dwFileAttributes != INVALID_FILE_ATTRIBUTES)
+            {
+                if (bReadOnly)
+                    dwFileAttributes = (dwFileAttributes & ~FILE_ATTRIBUTE_READONLY);
+                else
+                    dwFileAttributes |= FILE_ATTRIBUTE_READONLY;
+                if (!SetFileAttributes(szCurFile, dwFileAttributes))
+                    MsgBox(MBWARN, IDS_READONLY_MODIFY, szCurFile);
+            }
+            else
+                MsgBox(MBWARN, IDS_READONLY_MODIFY, szCurFile);
+
+            dwFileAttributes = GetFileAttributes(szCurFile);
+            if (dwFileAttributes != INVALID_FILE_ATTRIBUTES)
+                bReadOnly = (dwFileAttributes & FILE_ATTRIBUTE_READONLY);
+
+            SetWindowTitle(hwnd, uidsAppTitle, fIsElevated, IDS_UNTITLED, szCurFile,
+                           iPathNameFormat, bModified || iEncoding != iOriginalEncoding,
+                           IDS_READONLY, bReadOnly, szTitleExcerpt);
+
+            break;
         }
-        break;
 
         case IDM_FILE_BROWSE:
         {
@@ -2255,8 +2259,9 @@ LRESULT MsgCommand(HWND hwnd, WPARAM wParam, LPARAM lParam)
 
             if ((INT_PTR)sei.hInstApp < 32)
                 MsgBox(MBWARN, IDS_ERR_BROWSE);
+
+            break;
         }
-        break;
 
         case IDM_FILE_NEWWINDOW:
         case IDM_FILE_NEWWINDOW2:
@@ -2340,8 +2345,9 @@ LRESULT MsgCommand(HWND hwnd, WPARAM wParam, LPARAM lParam)
             sei.nShow = SW_SHOWNORMAL;
 
             ShellExecuteEx(&sei);
+
+            break;
         }
-        break;
 
         case IDM_FILE_LAUNCH:
         {
@@ -2372,8 +2378,9 @@ LRESULT MsgCommand(HWND hwnd, WPARAM wParam, LPARAM lParam)
             sei.nShow = SW_SHOWNORMAL;
 
             ShellExecuteEx(&sei);
+
+            break;
         }
-        break;
 
         case IDM_FILE_RUN:
         {
@@ -2386,8 +2393,9 @@ LRESULT MsgCommand(HWND hwnd, WPARAM wParam, LPARAM lParam)
             PathQuoteSpaces(tchCmdLine);
 
             RunDlg(hwnd, tchCmdLine);
+
+            break;
         }
-        break;
 
         case IDM_FILE_OPENWITH:
         {
@@ -2395,14 +2403,33 @@ LRESULT MsgCommand(HWND hwnd, WPARAM wParam, LPARAM lParam)
                 break;
 
             OpenWithDlg(hwnd, szCurFile);
+
+            break;
         }
-        break;
+
+        case IDM_FILE_POST:
+        {
+            if (pLexCurrent->rid == 63018) // lexSQL
+            {
+                MessageBox(hwnd, L"Execute SQL", L"go", 0);
+            }
+            if (pLexCurrent->rid == 63010) // lexJS
+            {
+                MessageBox(hwnd, L"Post JSON", L"go", 0);
+            }
+            if (pLexCurrent->rid == 63002) // lexXML
+            {
+                MessageBox(hwnd, L"Post XML", L"go", 0);
+            }
+            break;
+        }
 
         case IDM_FILE_PAGESETUP:
         {
             EditPrintSetup(hwndEdit);
+
+            break;
         }
-        break;
 
         case IDM_FILE_PRINT:
         {
@@ -2426,8 +2453,9 @@ LRESULT MsgCommand(HWND hwnd, WPARAM wParam, LPARAM lParam)
 
             if (!EditPrint(hwndEdit, pszTitle, tchPageFmt))
                 MsgBox(MBWARN, IDS_PRINT_ERROR, pszTitle);
+
+            break;
         }
-        break;
 
         case IDM_FILE_PROPERTIES:
         {

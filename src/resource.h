@@ -192,6 +192,7 @@
 #define IDM_FILE_MANAGEFAV              40019
 #define IDM_FILE_RECENT                 40020
 #define IDM_FILE_EXIT                   40021
+#define IDM_FILE_POST                   40022
 #define IDM_ENCODING_ANSI               40100
 #define IDM_ENCODING_UNICODE            40101
 #define IDM_ENCODING_UNICODEREV         40102
