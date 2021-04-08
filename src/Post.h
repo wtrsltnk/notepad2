@@ -21,7 +21,9 @@
 #ifndef POST_H
 #define POST_H
 
-void PostContent(const char *content, int selectionStart, int selectionEnd);
+#include <windows.h>
+
+void PostContent(HWND hwnd, const char *content);
 
 #endif
 

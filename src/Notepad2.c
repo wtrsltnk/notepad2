@@ -2409,7 +2409,7 @@ LRESULT MsgCommand(HWND hwnd, WPARAM wParam, LPARAM lParam)
 
         case IDM_FILE_POST:
         {
-            char *lpData;
+            char *pszText;
             DWORD cbData;
             LRESULT rSelectionStart;
             LRESULT rSelectionEnd;
@@ -2422,15 +2422,65 @@ LRESULT MsgCommand(HWND hwnd, WPARAM wParam, LPARAM lParam)
                 break;
             }
 
-            lpData = GlobalAlloc(GPTR, cbData + 1);
-            SendMessage(hwndEdit, SCI_GETTEXT, GlobalSize(lpData), (LPARAM)lpData);
+            pszText = GlobalAlloc(GPTR, cbData + 1);
+            SendMessage(hwndEdit, SCI_GETTEXT, GlobalSize(pszText), (LPARAM)pszText);
 
             rSelectionEnd = SendMessage(hwndEdit, SCI_GETSELECTIONEND, 0, 0);
             rSelectionStart = SendMessage(hwndEdit, SCI_GETSELECTIONSTART, 0, 0);
 
-            PostContent(lpData, rSelectionStart, rSelectionEnd);
+            UINT uCodePage = (SendMessage(hwndEdit, SCI_GETCODEPAGE, 0, 0) == SC_CP_UTF8) ? CP_UTF8 : CP_ACP;
 
-            GlobalFree(lpData);
+            WCHAR *pszTextW;
+            int cchTextW = MultiByteToWideChar(uCodePage, 0, pszText, -1, NULL, 0);
+            if (cchTextW > 0)
+            {
+                pszTextW = LocalAlloc(LPTR, sizeof(WCHAR) * (cchTextW + 1));
+                MultiByteToWideChar(uCodePage, 0, pszText, -1, StrEnd(pszTextW), (int)LocalSize(pszTextW) / sizeof(WCHAR));
+            }
+            else
+            {
+                pszTextW = L"";
+            }
+
+            if (OpenClipboard(hwnd))
+            {
+                HANDLE hNew = GlobalAlloc(GMEM_MOVEABLE | GMEM_ZEROINIT, sizeof(WCHAR) * (lstrlen(pszTextW) + 21));
+                WCHAR *pszNew = GlobalLock(hNew);
+
+                lstrcpy(pszNew, L"THIS_IS_A_POST_ACTI\n");
+                lstrcpy(pszNew + 20, pszTextW);
+
+                GlobalUnlock(hNew);
+
+                SetClipboardData(CF_UNICODETEXT, hNew);
+                CloseClipboard();
+
+                WCHAR wchDirectory[MAX_PATH] = L"";
+                WCHAR szModuleName[MAX_PATH];
+                WCHAR szCommand[MAX_PATH];
+
+                if (lstrlen(szCurFile))
+                {
+                    lstrcpy(wchDirectory, szCurFile);
+                    PathRemoveFileSpec(wchDirectory);
+                }
+
+                GetModuleFileName(NULL, szModuleName, COUNTOF(szModuleName));
+
+                lstrcpy(szCommand, szModuleName);
+                lstrcat(szCommand, L" -c");
+                STARTUPINFO info = {sizeof(info)};
+                PROCESS_INFORMATION processInfo;
+                if (CreateProcess(szModuleName, szCommand, NULL, NULL, TRUE, 0, NULL, NULL, &info, &processInfo))
+                {
+                    CloseHandle(processInfo.hProcess);
+                    CloseHandle(processInfo.hThread);
+                }
+            }
+
+            LocalFree(pszTextW);
+            GlobalFree(pszText);
+
             break;
         }
 

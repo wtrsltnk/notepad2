@@ -579,7 +579,7 @@ target_sources(Notepad2
   PUBLIC "scintilla/src/Catalogue.h")
 
 target_sources(Notepad2
-  PUBLIC "src/Post.cpp"
+  PUBLIC "src/Post.c"
   PUBLIC "src/Post.h")
 
 target_include_directories(Notepad2
@@ -608,4 +608,5 @@ target_link_libraries(Notepad2
   PUBLIC ole32.lib
   PUBLIC oleaut32.lib
   PUBLIC psapi.lib
-  PUBLIC odbc32)
+  PUBLIC odbc32
+  PUBLIC wininet)
