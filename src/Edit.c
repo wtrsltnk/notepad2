@@ -32,6 +32,7 @@
 #include <shlwapi.h>
 #include <stdio.h>
 #include <string.h>
+#include <time.h>
 
 extern HWND hwndMain;
 extern HWND hwndEdit;
@@ -2720,13 +2721,442 @@ void EditSpacesToTabs(HWND hwnd, int nTabWidth, BOOL bOnlyIndentingWS)
         GlobalFree(pszConvW);
 }
 
+
+//=============================================================================
+//
+//  EditDuplicateLine()
+//
+void EditDuplicateLine(HWND hwndEdit)
+{
+    SendMessage(hwndEdit, SCI_LINEDUPLICATE, 0, 0);
+}
+
+
+//=============================================================================
+//
+//  EditCutLine()
+//
+void EditCutLine(HWND hwndEdit)
+{
+    SendMessage(hwndEdit, SCI_LINECUT, 0, 0);
+}
+
+
+//=============================================================================
+//
+//  EditDeleteLine()
+//
+void EditDeleteLine(HWND hwndEdit)
+{
+    SendMessage(hwndEdit, SCI_LINEDELETE, 0, 0);
+}
+
+
+//=============================================================================
+//
+//  EditDeleteLineLeft()
+//
+void EditDeleteLineLeft(HWND hwndEdit)
+{
+    SendMessage(hwndEdit, SCI_DELLINELEFT, 0, 0);
+}
+
+
+//=============================================================================
+//
+//  EditDeleteLineRight()
+//
+void EditDeleteLineRight(HWND hwndEdit)
+{
+    SendMessage(hwndEdit, SCI_DELLINERIGHT, 0, 0);
+}
+
+
+//=============================================================================
+//
+//  EditCopyLine()
+//
+void EditCopyLine(HWND hwndEdit)
+{
+    SendMessage(hwndEdit, SCI_LINECOPY, 0, 0);
+}
+
+
+//=============================================================================
+//
+//  EditSelectWord()
+//
+void EditSelectWord(HWND hwndEdit)
+{
+    int iSel =
+        (int)SendMessage(hwndEdit, SCI_GETSELECTIONEND, 0, 0) -
+        (int)SendMessage(hwndEdit, SCI_GETSELECTIONSTART, 0, 0);
+
+    int iPos = (int)SendMessage(hwndEdit, SCI_GETCURRENTPOS, 0, 0);
+
+    if (iSel == 0)
+    {
+
+        int iWordStart = (int)SendMessage(hwndEdit, SCI_WORDSTARTPOSITION, iPos, TRUE);
+        int iWordEnd = (int)SendMessage(hwndEdit, SCI_WORDENDPOSITION, iPos, TRUE);
+
+        if (iWordStart == iWordEnd) // we are in whitespace salad...
+        {
+            iWordStart = (int)SendMessage(hwndEdit, SCI_WORDENDPOSITION, iPos, FALSE);
+            iWordEnd = (int)SendMessage(hwndEdit, SCI_WORDENDPOSITION, iWordStart, TRUE);
+            if (iWordStart != iWordEnd)
+            {
+                //if (SCLEX_HTML == SendMessage(hwndEdit,SCI_GETLEXER,0,0) &&
+                //    SCE_HPHP_VARIABLE == SendMessage(hwndEdit,SCI_GETSTYLEAT,(WPARAM)iWordStart,0) &&
+                //    '$' == (char)SendMessage(hwndEdit,SCI_GETCHARAT,(WPARAM)iWordStart-1,0))
+                //  iWordStart--;
+                SendMessage(hwndEdit, SCI_SETSEL, iWordStart, iWordEnd);
+            }
+        }
+        else
+        {
+            //if (SCLEX_HTML == SendMessage(hwndEdit,SCI_GETLEXER,0,0) &&
+            //    SCE_HPHP_VARIABLE == SendMessage(hwndEdit,SCI_GETSTYLEAT,(WPARAM)iWordStart,0) &&
+            //    '$' == (char)SendMessage(hwndEdit,SCI_GETCHARAT,(WPARAM)iWordStart-1,0))
+            //  iWordStart--;
+            SendMessage(hwndEdit, SCI_SETSEL, iWordStart, iWordEnd);
+        }
+
+        iSel =
+            (int)SendMessage(hwndEdit, SCI_GETSELECTIONEND, 0, 0) -
+            (int)SendMessage(hwndEdit, SCI_GETSELECTIONSTART, 0, 0);
+
+        if (iSel == 0)
+        {
+            int iLine = (int)SendMessage(hwndEdit, SCI_LINEFROMPOSITION, iPos, 0);
+            int iLineStart = (int)SendMessage(hwndEdit, SCI_GETLINEINDENTPOSITION, iLine, 0);
+            int iLineEnd = (int)SendMessage(hwndEdit, SCI_GETLINEENDPOSITION, iLine, 0);
+            SendMessage(hwndEdit, SCI_SETSEL, iLineStart, iLineEnd);
+        }
+    }
+    else
+    {
+        int iLine = (int)SendMessage(hwndEdit, SCI_LINEFROMPOSITION, iPos, 0);
+        int iLineStart = (int)SendMessage(hwndEdit, SCI_GETLINEINDENTPOSITION, iLine, 0);
+        int iLineEnd = (int)SendMessage(hwndEdit, SCI_GETLINEENDPOSITION, iLine, 0);
+        SendMessage(hwndEdit, SCI_SETSEL, iLineStart, iLineEnd);
+    }
+}
+
+
+//=============================================================================
+//
+//  EditSelectLine()
+//
+void EditSelectLine(HWND hwndEdit)
+{
+    int iSelStart = (int)SendMessage(hwndEdit, SCI_GETSELECTIONSTART, 0, 0);
+    int iSelEnd = (int)SendMessage(hwndEdit, SCI_GETSELECTIONEND, 0, 0);
+    int iLineStart = (int)SendMessage(hwndEdit, SCI_LINEFROMPOSITION, iSelStart, 0);
+    int iLineEnd = (int)SendMessage(hwndEdit, SCI_LINEFROMPOSITION, iSelEnd, 0);
+    iSelStart = (int)SendMessage(hwndEdit, SCI_POSITIONFROMLINE, iLineStart, 0);
+    iSelEnd = (int)SendMessage(hwndEdit, SCI_POSITIONFROMLINE, iLineEnd + 1, 0);
+    SendMessage(hwndEdit, SCI_SETSEL, iSelStart, iSelEnd);
+    SendMessage(hwndEdit, SCI_CHOOSECARETX, 0, 0);
+}
+
+
+//=============================================================================
+//
+//  EditDuplicateSelection()
+//
+void EditDuplicateSelection(HWND hwndEdit)
+{
+    SendMessage(hwndEdit, SCI_BEGINUNDOACTION, 0, 0);
+    SendMessage(hwndEdit, SCI_SELECTIONDUPLICATE, 0, 0);
+    SendMessage(hwndEdit, SCI_ENDUNDOACTION, 0, 0);
+}
+
+
+//=============================================================================
+//
+//  EditIndent()
+//
+void EditIndent(HWND hwndEdit, BOOL tabIndents)
+{
+    int iLineSelStart = (int)SendMessage(hwndEdit, SCI_LINEFROMPOSITION,
+                                         (int)SendMessage(hwndEdit, SCI_GETSELECTIONSTART, 0, 0), 0);
+    int iLineSelEnd = (int)SendMessage(hwndEdit, SCI_LINEFROMPOSITION,
+                                       (int)SendMessage(hwndEdit, SCI_GETSELECTIONEND, 0, 0), 0);
+
+    SendMessage(hwndEdit, SCI_SETTABINDENTS, TRUE, 0);
+
+    if (iLineSelStart == iLineSelEnd)
+    {
+        SendMessage(hwndEdit, SCI_VCHOME, 0, 0);
+        SendMessage(hwndEdit, SCI_TAB, 0, 0);
+    }
+    else
+    {
+        SendMessage(hwndEdit, SCI_TAB, 0, 0);
+    }
+
+    SendMessage(hwndEdit, SCI_SETTABINDENTS, tabIndents, 0);
+}
+
+
+//=============================================================================
+//
+//  EditUnindent()
+//
+void EditUnindent(HWND hwndEdit, BOOL tabIndents)
+{
+    int iLineSelStart = (int)SendMessage(hwndEdit, SCI_LINEFROMPOSITION,
+                                         (int)SendMessage(hwndEdit, SCI_GETSELECTIONSTART, 0, 0), 0);
+    int iLineSelEnd = (int)SendMessage(hwndEdit, SCI_LINEFROMPOSITION,
+                                       (int)SendMessage(hwndEdit, SCI_GETSELECTIONEND, 0, 0), 0);
+
+    SendMessage(hwndEdit, SCI_SETTABINDENTS, TRUE, 0);
+    if (iLineSelStart == iLineSelEnd)
+    {
+        SendMessage(hwndEdit, SCI_VCHOME, 0, 0);
+        SendMessage(hwndEdit, SCI_BACKTAB, 0, 0);
+    }
+    else
+        SendMessage(hwndEdit, SCI_BACKTAB, 0, 0);
+    SendMessage(hwndEdit, SCI_SETTABINDENTS, tabIndents, 0);
+}
+
+
+//=============================================================================
+//
+//  EditInsertDate()
+//
+void EditInsertDate(HWND hwnd, BOOL insertShortDate)
+{
+    WCHAR tchDate[128];
+    WCHAR tchTime[128];
+    WCHAR tchDateTime[256];
+    WCHAR tchTemplate[256];
+    SYSTEMTIME st;
+    char mszBuf[MAX_PATH * 3];
+    UINT uCP;
+    //int   iSelStart;
+
+    GetLocalTime(&st);
+
+    if (IniGetString(L"Settings2",
+                     insertShortDate ? L"DateTimeShort" : L"DateTimeLong",
+                     L"", tchTemplate, COUNTOF(tchTemplate)))
+    {
+        struct tm sst;
+        sst.tm_isdst = -1;
+        sst.tm_sec = (int)st.wSecond;
+        sst.tm_min = (int)st.wMinute;
+        sst.tm_hour = (int)st.wHour;
+        sst.tm_mday = (int)st.wDay;
+        sst.tm_mon = (int)st.wMonth - 1;
+        sst.tm_year = (int)st.wYear - 1900;
+        sst.tm_wday = (int)st.wDayOfWeek;
+        mktime(&sst);
+        wcsftime(tchDateTime, COUNTOF(tchDateTime), tchTemplate, &sst);
+    }
+    else
+    {
+        GetDateFormat(LOCALE_USER_DEFAULT, insertShortDate ? DATE_SHORTDATE : DATE_LONGDATE,
+                      &st, NULL, tchDate, COUNTOF(tchDate));
+        GetTimeFormat(LOCALE_USER_DEFAULT, TIME_NOSECONDS, &st, NULL, tchTime, COUNTOF(tchTime));
+
+        wsprintf(tchDateTime, L"%s %s", tchTime, tchDate);
+    }
+
+    uCP = (SendMessage(hwndEdit, SCI_GETCODEPAGE, 0, 0) == SC_CP_UTF8) ? CP_UTF8 : CP_ACP;
+    WideCharToMultiByte(uCP, 0, tchDateTime, -1, mszBuf, COUNTOF(mszBuf), NULL, NULL);
+    SendMessage(hwndEdit, SCI_REPLACESEL, 0, (LPARAM)mszBuf);
+}
+
+
+//=============================================================================
+//
+//  EditInsertDate()
+//
+void EditInsertFileOrPath(HWND hwndEdit, LPCWSTR szCurFile, BOOL insertFile)
+{
+    SHFILEINFO shfi;
+    LPCWSTR pszInsert;
+    WCHAR tchUntitled[32];
+    char mszBuf[MAX_PATH * 3];
+    UINT uCP;
+    //int   iSelStart;
+
+    if (lstrlen(szCurFile))
+    {
+        if (insertFile)
+        {
+            SHGetFileInfo2(szCurFile, 0, &shfi, sizeof(SHFILEINFO), SHGFI_DISPLAYNAME);
+            pszInsert = shfi.szDisplayName;
+        }
+        else
+            pszInsert = szCurFile;
+    }
+
+    else
+    {
+        GetString(IDS_UNTITLED, tchUntitled, COUNTOF(tchUntitled));
+        pszInsert = tchUntitled;
+    }
+
+    uCP = (SendMessage(hwndEdit, SCI_GETCODEPAGE, 0, 0) == SC_CP_UTF8) ? CP_UTF8 : CP_ACP;
+    WideCharToMultiByte(uCP, 0, pszInsert, -1, mszBuf, COUNTOF(mszBuf), NULL, NULL);
+    //iSelStart = SendMessage(hwndEdit,SCI_GETSELECTIONSTART,0,0);
+    SendMessage(hwndEdit, SCI_REPLACESEL, 0, (LPARAM)mszBuf);
+    //SendMessage(hwndEdit,SCI_SETANCHOR,(WPARAM)iSelStart,0);
+}
+
+
+//=============================================================================
+//
+//  EditCommentLine()
+//
+void EditCommentLine(HWND hwndEdit)
+{
+    switch (SendMessage(hwndEdit, SCI_GETLEXER, 0, 0))
+    {
+        case SCLEX_NULL:
+        case SCLEX_CSS:
+        case SCLEX_DIFF:
+            break;
+        case SCLEX_HTML:
+        case SCLEX_XML:
+        case SCLEX_CPP:
+        case SCLEX_PASCAL:
+            BeginWaitCursor();
+            EditToggleLineComments(hwndEdit, L"//", FALSE);
+            EndWaitCursor();
+            break;
+        case SCLEX_VBSCRIPT:
+        case SCLEX_VB:
+            BeginWaitCursor();
+            EditToggleLineComments(hwndEdit, L"'", FALSE);
+            EndWaitCursor();
+            break;
+        case SCLEX_MAKEFILE:
+        case SCLEX_PERL:
+        case SCLEX_PYTHON:
+        case SCLEX_CONF:
+        case SCLEX_POWERSHELL:
+            BeginWaitCursor();
+            EditToggleLineComments(hwndEdit, L"#", TRUE);
+            EndWaitCursor();
+            break;
+        case SCLEX_ASM:
+        case SCLEX_PROPERTIES:
+            BeginWaitCursor();
+            EditToggleLineComments(hwndEdit, L";", TRUE);
+            EndWaitCursor();
+            break;
+        case SCLEX_SQL:
+            BeginWaitCursor();
+            EditToggleLineComments(hwndEdit, L"--", TRUE);
+            EndWaitCursor();
+            break;
+        case SCLEX_BATCH:
+            BeginWaitCursor();
+            EditToggleLineComments(hwndEdit, L"rem ", TRUE);
+            EndWaitCursor();
+            break;
+    }
+}
+
+
+//=============================================================================
+//
+//  EditStreamCommentLine()
+//
+void EditStreamCommentLine(HWND hwndEdit)
+{
+    switch (SendMessage(hwndEdit, SCI_GETLEXER, 0, 0))
+    {
+        case SCLEX_NULL:
+        case SCLEX_VBSCRIPT:
+        case SCLEX_MAKEFILE:
+        case SCLEX_VB:
+        case SCLEX_ASM:
+        case SCLEX_SQL:
+        case SCLEX_PERL:
+        case SCLEX_PYTHON:
+        case SCLEX_PROPERTIES:
+        case SCLEX_CONF:
+        case SCLEX_POWERSHELL:
+        case SCLEX_BATCH:
+        case SCLEX_DIFF:
+            break;
+        case SCLEX_HTML:
+        case SCLEX_XML:
+        case SCLEX_CSS:
+        case SCLEX_CPP:
+            EditEncloseSelection(hwndEdit, L"/*", L"*/");
+            break;
+        case SCLEX_PASCAL:
+            EditEncloseSelection(hwndEdit, L"{", L"}");
+    }
+}
+
+
+//=============================================================================
+//
+//  EditFindMatchingBrace()
+//
+void EditFindMatchingBrace(HWND hwndEdit)
+{
+    int iBrace2 = -1;
+    int iPos = (int)SendMessage(hwndEdit, SCI_GETCURRENTPOS, 0, 0);
+    char c = (char)SendMessage(hwndEdit, SCI_GETCHARAT, iPos, 0);
+    if (StrChrA("()[]{}", c))
+        iBrace2 = (int)SendMessage(hwndEdit, SCI_BRACEMATCH, iPos, 0);
+    // Try one before
+    else
+    {
+        iPos = (int)SendMessage(hwndEdit, SCI_POSITIONBEFORE, iPos, 0);
+        c = (char)SendMessage(hwndEdit, SCI_GETCHARAT, iPos, 0);
+        if (StrChrA("()[]{}", c))
+            iBrace2 = (int)SendMessage(hwndEdit, SCI_BRACEMATCH, iPos, 0);
+    }
+    if (iBrace2 != -1)
+        SendMessage(hwndEdit, SCI_GOTOPOS, (WPARAM)iBrace2, 0);
+}
+
+
+//=============================================================================
+//
+//  EditSelectToMatchingBrace()
+//
+void EditSelectToMatchingBrace(HWND hwndEdit)
+{
+    int iBrace2 = -1;
+    int iPos = (int)SendMessage(hwndEdit, SCI_GETCURRENTPOS, 0, 0);
+    char c = (char)SendMessage(hwndEdit, SCI_GETCHARAT, iPos, 0);
+    if (StrChrA("()[]{}", c))
+        iBrace2 = (int)SendMessage(hwndEdit, SCI_BRACEMATCH, iPos, 0);
+    // Try one before
+    else
+    {
+        iPos = (int)SendMessage(hwndEdit, SCI_POSITIONBEFORE, iPos, 0);
+        c = (char)SendMessage(hwndEdit, SCI_GETCHARAT, iPos, 0);
+        if (StrChrA("()[]{}", c))
+            iBrace2 = (int)SendMessage(hwndEdit, SCI_BRACEMATCH, iPos, 0);
+    }
+    if (iBrace2 != -1)
+    {
+        if (iBrace2 > iPos)
+            SendMessage(hwndEdit, SCI_SETSEL, (WPARAM)iPos, (LPARAM)iBrace2 + 1);
+        else
+            SendMessage(hwndEdit, SCI_SETSEL, (WPARAM)iPos + 1, (LPARAM)iBrace2);
+    }
+}
+
+
 //=============================================================================
 //
 //  EditMoveUp()
 //
 void EditMoveUp(HWND hwnd)
 {
-
     int iCurPos = (int)SendMessage(hwnd, SCI_GETCURRENTPOS, 0, 0);
     int iAnchorPos = (int)SendMessage(hwnd, SCI_GETANCHOR, 0, 0);
     int iCurLine = (int)SendMessage(hwnd, SCI_LINEFROMPOSITION, (WPARAM)iCurPos, 0);
