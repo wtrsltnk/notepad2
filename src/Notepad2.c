@@ -3872,70 +3872,37 @@ LRESULT MsgCommand(HWND hwnd, WPARAM wParam, LPARAM lParam)
             }
             else
                 MsgBox(MBINFO, IDS_CREATEINI_FAIL);
+            break;
         }
-        break;
 
         case IDM_HELP_ABOUT:
+        {
             ThemedDialogBox(g_hInstance, MAKEINTRESOURCE(IDD_ABOUT),
                             hwnd, AboutDlgProc);
             break;
+        }
 
         case CMD_ESCAPE:
+        {
             if (iEscFunction == 1)
                 SendMessage(hwnd, WM_SYSCOMMAND, SC_MINIMIZE, 0);
             else if (iEscFunction == 2)
                 SendMessage(hwnd, WM_CLOSE, 0, 0);
             break;
+        }
 
         case CMD_SHIFTESC:
+        {
             if (FileSave(TRUE, FALSE, FALSE, FALSE))
                 SendMessage(hwnd, WM_CLOSE, 0, 0);
             break;
+        }
 
         case CMD_CTRLENTER:
         {
-            UINT uCodePage = (SendMessage(hwndEdit, SCI_GETCODEPAGE, 0, 0) == SC_CP_UTF8) ? CP_UTF8 : CP_ACP;
-
-            int cchSelection = (int)SendMessage(hwndEdit, SCI_GETSELECTIONEND, 0, 0) - (int)SendMessage(hwndEdit, SCI_GETSELECTIONSTART, 0, 0);
-            char *pszSelection = LocalAlloc(LPTR, cchSelection + 1);
-            SendMessage(hwndEdit, SCI_GETSELTEXT, 0, (LPARAM)pszSelection);
-            pszSelection[cchSelection] = 0; // zero terminate
-
-            WCHAR *pszSelectionW;
-            int cchSelectionW = MultiByteToWideChar(uCodePage, 0, pszSelection, -1, NULL, 0);
-            if (cchSelectionW > 0)
-            {
-                pszSelectionW = LocalAlloc(LPTR, sizeof(WCHAR) * (cchSelectionW + 1));
-                MultiByteToWideChar(uCodePage, 0, pszSelection, -1, StrEnd(pszSelectionW), (int)LocalSize(pszSelectionW) / sizeof(WCHAR));
-            }
-            else
-            {
-                pszSelectionW = L"";
-            }
-            LocalFree(pszSelection);
-
-            int cchText = (int)SendMessage(hwndEdit, SCI_GETLENGTH, 0, 0);
-            char *pszText = LocalAlloc(LPTR, cchText + 1);
-            SendMessage(hwndEdit, SCI_GETTEXT, (int)LocalSize(pszText), (LPARAM)pszText);
-            pszText[cchText] = 0; // zero terminate
-
-            WCHAR *pszTextW;
-            int cchTextW = MultiByteToWideChar(uCodePage, 0, pszText, -1, NULL, 0);
-            if (cchTextW > 0)
-            {
-                pszTextW = LocalAlloc(LPTR, sizeof(WCHAR) * (cchTextW + 1));
-                MultiByteToWideChar(uCodePage, 0, pszText, -1, StrEnd(pszTextW), (int)LocalSize(pszTextW) / sizeof(WCHAR));
-            }
-            else
-            {
-                pszTextW = L"pech";
-            }
-            LocalFree(pszText);
-
-            int cchLexer = (int)SendMessage(hwndEdit, SCI_GETLEXER, 0, 0);
-
-            LocalFree(pszTextW);
-            LocalFree(pszSelectionW);
+            bAutoIndent = (bAutoIndent) ? 0 : 1;
+            SendMessage(hwndEdit, SCI_NEWLINE, 0, 0);
+            bAutoIndent = (bAutoIndent) ? 0 : 1;
             break;
         }
 
@@ -3958,8 +3925,8 @@ LRESULT MsgCommand(HWND hwnd, WPARAM wParam, LPARAM lParam)
                 else
                     SendMessage(hwndEdit, SCI_DELWORDLEFT, 0, 0);
             }
+            break;
         }
-        break;
 
         case CMD_CTRLDEL:
         {
@@ -3978,16 +3945,18 @@ LRESULT MsgCommand(HWND hwnd, WPARAM wParam, LPARAM lParam)
                 else // iStartPos == iEndPos
                     SendMessage(hwndEdit, SCI_LINEDELETE, 0, 0);
             }
+            break;
         }
-        break;
 
         case CMD_CTRLTAB:
+        {
             SendMessage(hwndEdit, SCI_SETTABINDENTS, FALSE, 0);
             SendMessage(hwndEdit, SCI_SETUSETABS, TRUE, 0);
             SendMessage(hwndEdit, SCI_TAB, 0, 0);
             SendMessage(hwndEdit, SCI_SETUSETABS, !bTabsAsSpaces, 0);
             SendMessage(hwndEdit, SCI_SETTABINDENTS, bTabIndents, 0);
             break;
+        }
 
         case CMD_RECODEDEFAULT:
         {
@@ -4005,8 +3974,8 @@ LRESULT MsgCommand(HWND hwnd, WPARAM wParam, LPARAM lParam)
                 lstrcpy(tchCurFile2, szCurFile);
                 FileLoad(FALSE, FALSE, TRUE, FALSE, tchCurFile2);
             }
+            break;
         }
-        break;
 
         case CMD_RELOADANSI:
         {
@@ -4017,8 +3986,8 @@ LRESULT MsgCommand(HWND hwnd, WPARAM wParam, LPARAM lParam)
                 lstrcpy(tchCurFile2, szCurFile);
                 FileLoad(FALSE, FALSE, TRUE, FALSE, tchCurFile2);
             }
+            break;
         }
-        break;
 
         case CMD_RELOADOEM:
         {
@@ -4029,8 +3998,8 @@ LRESULT MsgCommand(HWND hwnd, WPARAM wParam, LPARAM lParam)
                 lstrcpy(tchCurFile2, szCurFile);
                 FileLoad(FALSE, FALSE, TRUE, FALSE, tchCurFile2);
             }
+            break;
         }
-        break;
 
         case CMD_RELOADASCIIASUTF8:
         {
@@ -4043,8 +4012,8 @@ LRESULT MsgCommand(HWND hwnd, WPARAM wParam, LPARAM lParam)
                 FileLoad(FALSE, FALSE, TRUE, FALSE, tchCurFile2);
                 bLoadASCIIasUTF8 = _bLoadASCIIasUTF8;
             }
+            break;
         }
-        break;
 
         case CMD_RELOADNOFILEVARS:
         {
@@ -4060,8 +4029,8 @@ LRESULT MsgCommand(HWND hwnd, WPARAM wParam, LPARAM lParam)
                 fNoFileVariables = _fNoFileVariables;
                 bNoEncodingTags = _bNoEncodingTags;
             }
+            break;
         }
-        break;
 
         case CMD_LEXDEFAULT:
             Style_SetDefaultLexer(hwndEdit);
